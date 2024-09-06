@@ -1,9 +1,16 @@
-import Image from "next/image";
+"use client";
+import Login from "./login/page";
+import { useEffect } from "react";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, db } from "@/config/firebase";
 
 export default function Home() {
+  const [loggedInUser, loading, _error] = useAuthState(auth);
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      hello
+    <div className=" font-[family-name:var(--font-geist-sans)]">
+      {loggedInUser?.photoURL}
     </div>
   );
 }
