@@ -1,19 +1,20 @@
 "use client";
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 import ReactFamilyTree from "react-family-tree";
 import { PinchZoomPan } from "../PinchZoomPan/PinchZoomPan";
 import { FamilyNode } from "../components/FamilyNode/FamilyNode";
 import { NODE_WIDTH, NODE_HEIGHT } from "../const";
 import css from "../App.module.css";
 import { getNodeStyle } from "@/utils";
-import data from "../data.json";
 import { NodeItem } from "@/type";
 import { ProfileDialog } from "@/components/ProfileDialog";
+import { generateQueryGetData, transformData } from "@/actions";
+import { getDocs } from "firebase/firestore";
 
 export default function App() {
-  const [nodes] = useState<NodeItem[]>(data as unknown as NodeItem[]);
+  const [nodes, setNodes] = useState<NodeItem[]>([] as unknown as NodeItem[]);
 
-  const firstNodeId = useMemo(() => nodes[0].id, [nodes]);
+  const firstNodeId = useMemo(() => nodes[0]?.id, [nodes]);
   const [rootId, setRootId] = useState(firstNodeId);
 
   const [selectId, setSelectId] = useState<string>();
@@ -29,9 +30,25 @@ export default function App() {
     [nodes, selectId]
   );
 
+  useEffect(() => {
+    const getData = async () => {
+      const queryData = generateQueryGetData();
+      try {
+        const dataSnapShot = await getDocs(queryData);
+        const data = transformData(dataSnapShot);
+        console.log("data", data);
+
+        // setNodes(data);
+      } catch (error) {
+        console.log("error", error);
+      }
+    };
+    getData();
+  }, []);
+
   return (
     <div className={css.root}>
-      {nodes.length > 0 && (
+      {nodes?.length > 0 && (
         <PinchZoomPan min={0.5} max={2.5} captureWheel className={css.wrapper}>
           <ReactFamilyTree
             nodes={nodes}

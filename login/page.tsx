@@ -36,6 +36,7 @@ export default function Login() {
     if (loggedInUser) {
       router.push("/");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loggedInUser]);
 
   return (
