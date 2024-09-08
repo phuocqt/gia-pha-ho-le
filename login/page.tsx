@@ -1,24 +1,21 @@
 "use client";
-import Link from "next/link";
 import {
   useAuthState,
   useSignInWithFacebook,
   useSignInWithGoogle,
 } from "react-firebase-hooks/auth";
 
-import { Button } from "@/src/components/ui/button";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { auth } from "@/config/firebase";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/src/components/ui/card";
-import { Input } from "@/src/components/ui/input";
-import { Label } from "@/src/components/ui/label";
-import { auth } from "@/src/config/firebase";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export const description =
   "A login form with email and password. There's an option to login with Google and a link to sign up if you don't have an account.";
