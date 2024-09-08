@@ -1,19 +1,18 @@
 "use client";
 import React, { useMemo, useState, useCallback } from "react";
-import type { Node, ExtNode } from "relatives-tree/lib/types";
-import treePackage from "relatives-tree/package.json";
 import ReactFamilyTree from "react-family-tree";
-import { SourceSelect } from "../SourceSelect/SourceSelect";
 import { PinchZoomPan } from "../PinchZoomPan/PinchZoomPan";
-import { FamilyNode } from "../FamilyNode/FamilyNode";
-import { NodeDetails } from "../NodeDetails/NodeDetails";
-import { NODE_WIDTH, NODE_HEIGHT, SOURCES, DEFAULT_SOURCE } from "../const";
+import { FamilyNode } from "../components/FamilyNode/FamilyNode";
+import { NodeDetails } from "../components/NodeDetails/NodeDetails";
+import { NODE_WIDTH, NODE_HEIGHT } from "../const";
 import css from "../App.module.css";
 import { getNodeStyle } from "@/utils";
+import data from "../data.json";
+import { NodeItem } from "@/type";
+import { ProfileDialog } from "@/components/ProfileDialog";
 
 export default function App() {
-  const [source, setSource] = useState(DEFAULT_SOURCE);
-  const [nodes, setNodes] = useState(SOURCES[source]);
+  const [nodes, setNodes] = useState<NodeItem[]>(data as NodeItem[]);
 
   const firstNodeId = useMemo(() => nodes[0].id, [nodes]);
   const [rootId, setRootId] = useState(firstNodeId);
@@ -26,35 +25,13 @@ export default function App() {
     [firstNodeId]
   );
 
-  const changeSourceHandler = useCallback(
-    (value: string, nodes: readonly Readonly<Node>[]) => {
-      setRootId(nodes[0].id);
-      setNodes(nodes);
-      setSource(value);
-      setSelectId(undefined);
-      setHoverId(undefined);
-    },
-    []
-  );
-
   const selected = useMemo(
     () => nodes.find((item) => item.id === selectId),
     [nodes, selectId]
   );
-  console.log(nodes);
 
   return (
     <div className={css.root}>
-      <header className={css.header}>
-        <div>
-          <label>Source: </label>
-          <SourceSelect
-            value={source}
-            items={SOURCES}
-            onChange={changeSourceHandler}
-          />
-        </div>
-      </header>
       {nodes.length > 0 && (
         <PinchZoomPan min={0.5} max={2.5} captureWheel className={css.wrapper}>
           <ReactFamilyTree
@@ -63,7 +40,7 @@ export default function App() {
             width={NODE_WIDTH}
             height={NODE_HEIGHT}
             className={css.tree}
-            renderNode={(node: Readonly<ExtNode>) => (
+            renderNode={(node: Readonly<NodeItem>) => (
               <FamilyNode
                 key={node.id}
                 node={node}
@@ -82,7 +59,7 @@ export default function App() {
           Reset
         </button>
       )}
-      {selected && (
+      {/* {selected && (
         <NodeDetails
           node={selected}
           className={css.details}
@@ -90,7 +67,12 @@ export default function App() {
           onHover={setHoverId}
           onClear={() => setHoverId(undefined)}
         />
-      )}
+      )} */}
+      <ProfileDialog
+        node={selected}
+        open={!!selected}
+        onClose={() => setSelectId("")}
+      />
     </div>
   );
 }

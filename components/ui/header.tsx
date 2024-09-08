@@ -12,11 +12,11 @@ import {
 
 import userIcon from "../../assets/placeholder-user.jpg";
 import { signOut } from "firebase/auth";
-import { auth } from "@/config/firebase";
+import { auth, db } from "@/config/firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 
 export default function Header() {
   const logout = async () => {
@@ -26,16 +26,24 @@ export default function Header() {
       console.log("ERROR LOGGING OUT", error);
     }
   };
+  const setting = async () => {
+    try {
+    } catch (error) {
+      console.log("ERROR", error);
+    }
+  };
   const [loggedInUser] = useAuthState(auth);
   const [isLogged, setIsLogged] = useState(false);
   useEffect(() => {
     const setUserInDb = async () => {
       try {
         await setDoc(
-          doc(db, "users", loggedInUser?.email as string),
+          doc(db, "users", loggedInUser?.uid as string),
           {
             email: loggedInUser?.email,
             photoURL: loggedInUser?.photoURL,
+            name: loggedInUser?.displayName,
+            lastLoginAt: serverTimestamp(),
           },
           { merge: true } // just update what is changed
         );
@@ -51,8 +59,25 @@ export default function Header() {
   }, [loggedInUser]);
 
   return (
-    <header className="sticky top-0  z-30 flex h-14 items-center justify-end gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-[#404040] sm:px-6">
-      <div className="py-2">
+    <header className="sticky top-0  z-30 flex h-14 items-center  gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-[#404040] sm:px-6">
+      <div className="py-2 justify-between flex w-full">
+        <div className="flex">
+          <div className="mr-3">
+            <Button>
+              <Link href="/">Gia Phả</Link>
+            </Button>
+          </div>
+          <div className="mr-3">
+            <Button>
+              <Link href="/map">Sơ đồ phần mộ</Link>
+            </Button>
+          </div>
+          <div className="mr-3">
+            <Button>
+              <Link href="/contact">Liên Hệ</Link>
+            </Button>
+          </div>
+        </div>
         {!isLogged ? (
           <div className="mr-3">
             <Button>
@@ -79,7 +104,7 @@ export default function Header() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuItem onClick={setting}>Settings</DropdownMenuItem>
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>

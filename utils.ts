@@ -11,3 +11,11 @@ export function getNodeStyle({ left, top }: Readonly<ExtNode>): CSSProperties {
     }px)`,
   };
 }
+
+export function createYearRange(min: number, max: number): number[] {
+  const arr: number[] = [];
+  for (let i = min; i <= max; i++) {
+    arr.push(i);
+  }
+  return arr;
+}

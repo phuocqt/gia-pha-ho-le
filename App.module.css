@@ -63,6 +63,10 @@
   top: 60px;
 }
 
+.rdp-vhidden {
+  @apply hidden;
+}
+
 @media (max-width: 600px) {
   .header {
     flex-direction: column;
