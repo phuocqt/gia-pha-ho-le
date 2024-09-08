@@ -74,10 +74,10 @@ const AuthButton = ({
     <>
       <Button
         className={cn(buttonVariants({ variant, size, className }))}
-        onClick={() => {
+        onClick={(e) => {
           if (!loggedInUser) {
             setOpenAlert(true);
-          } else onClick?.();
+          } else onClick?.(e);
         }}
         {...props}
       >
