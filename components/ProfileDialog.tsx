@@ -23,23 +23,61 @@ import {
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/config/firebase";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import { editData } from "@/actions";
+import { useToast } from "@/hooks/use-toast";
 
 export function ProfileDialog({
   open,
   onClose,
   node,
 }: {
-  onClose?: () => void;
+  onClose?: (type?: "success") => void;
   open?: boolean;
   node?: NodeItem;
 }) {
   const [data, setData] = useState({ ...node });
   const [loggedInUser] = useAuthState(auth);
-  const [mode, setMode] = useState("view");
+  const [mode, setMode] = useState<"view" | "edit" | "addSpouses" | "addChild">(
+    "view"
+  );
+  const { toast } = useToast();
   useEffect(() => {
     if (!!node) setData({ ...node });
     setMode("view");
   }, [node, open]);
+
+  const onSubmit = () => {
+    if (mode === "edit") {
+      editData(data as NodeItem, (type) => {
+        if (type === "error")
+          toast({
+            title: "Đã có lỗi, vui lòng thử lại",
+          });
+        if (type === "success")
+          toast({
+            title: "Đã cập nhật thành công",
+          });
+        onClose?.("success");
+      });
+    }
+    // if (mode === "addChild") {
+    //   const e = node?.spouses?.[0];
+    //   const tempData: NodeItem = {
+    //     ...data,
+    //     parents: [node?.id, no],
+    //   };
+    //   editData(data as NodeItem, (type) => {
+    //     if (type === "error")
+    //       toast({
+    //         title: "Đã có lỗi, vui lòng thử lại",
+    //       });
+    //     if (type === "success")
+    //       toast({
+    //         title: "Đã cập nhật thành công",
+    //       });
+    //   });
+    // }
+  };
 
   return (
     <Dialog
@@ -91,7 +129,7 @@ export function ProfileDialog({
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => {
-                        setMode("create");
+                        setMode("addSpouses");
                       }}
                     >
                       Thêm Vợ/Chồng
@@ -99,7 +137,7 @@ export function ProfileDialog({
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => {
-                        setMode("create");
+                        setMode("addChild");
                       }}
                     >
                       Thêm Con
@@ -198,9 +236,9 @@ export function ProfileDialog({
               <DialogTitle>
                 {mode === "edit"
                   ? "CHỈNH SỬA SAU ĐÓ BẤM LƯU"
-                  : mode === "create"
-                  ? "THÊM NỘI DUNG SAU ĐÓ BẤM LƯU"
-                  : ""}
+                  : mode === "addChild"
+                  ? "THÊM CON"
+                  : "THÊM VỢ/CHỒNG"}
               </DialogTitle>
             </DialogHeader>
             <div className="flex justify-center">
@@ -251,6 +289,19 @@ export function ProfileDialog({
                   }
                 />
               </div>
+
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="birthday" className="text-left">
+                  Quan hệ với {node?.gender === "male" ? "ông" : "bà"}{" "}
+                  {node?.name}
+                </Label>
+                <div className="">
+                  {mode === "addChild"
+                    ? `Con ${data?.gender === "male" ? "trai" : "gái"}`
+                    : "Vợ/Chồng"}
+                </div>
+              </div>
+
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="birthday" className="text-left">
                   Năm sinh:
@@ -298,7 +349,7 @@ export function ProfileDialog({
                 </RadioGroup>
               </div>
 
-              {data?.isAlive && (
+              {!data?.isAlive && (
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="deathday" className="text-left">
                     Năm mất:
@@ -364,7 +415,7 @@ export function ProfileDialog({
         )}
         {mode === "edit" && (
           <DialogFooter className="p-4">
-            <Button type="submit">Lưu</Button>
+            <Button onClick={onSubmit}>Lưu</Button>
           </DialogFooter>
         )}
       </DialogContent>

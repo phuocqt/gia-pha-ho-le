@@ -12,7 +12,19 @@ import { generateQueryGetData, transformData } from "@/actions";
 import { getDocs } from "firebase/firestore";
 
 export default function App() {
-  const [nodes, setNodes] = useState<NodeItem[]>([] as unknown as NodeItem[]);
+  const [nodes, setNodes] = useState<NodeItem[]>([
+    {
+      id: "TsyAkbF89",
+      siblings: [],
+      deathday: "1990",
+      spouses: [],
+      name: "Lê Văn A",
+      birthday: "1800",
+      parents: [],
+      children: [],
+      gender: "male",
+    },
+  ] as unknown as NodeItem[]);
 
   const firstNodeId = useMemo(() => nodes[0]?.id, [nodes]);
   const [rootId, setRootId] = useState(firstNodeId);
@@ -30,19 +42,20 @@ export default function App() {
     [nodes, selectId]
   );
 
-  useEffect(() => {
-    const getData = async () => {
-      const queryData = generateQueryGetData();
-      try {
-        const dataSnapShot = await getDocs(queryData);
-        const data = transformData(dataSnapShot);
-        console.log("data", data);
+  const getData = async () => {
+    const queryData = generateQueryGetData();
+    try {
+      const dataSnapShot = await getDocs(queryData);
+      const data = transformData(dataSnapShot);
+      console.log("data", data);
 
-        // setNodes(data);
-      } catch (error) {
-        console.log("error", error);
-      }
-    };
+      setNodes(data as unknown as NodeItem[]);
+    } catch (error) {
+      console.log("error", error);
+    }
+  };
+
+  useEffect(() => {
     getData();
   }, []);
 
@@ -87,7 +100,10 @@ export default function App() {
       <ProfileDialog
         node={selected}
         open={!!selected}
-        onClose={() => setSelectId("")}
+        onClose={(success) => {
+          setSelectId("");
+          if (success) getData();
+        }}
       />
     </div>
   );
