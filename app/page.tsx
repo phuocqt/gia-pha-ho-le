@@ -11,7 +11,7 @@ import { NodeItem } from "@/type";
 import { ProfileDialog } from "@/components/ProfileDialog";
 
 export default function App() {
-  const [nodes] = useState<NodeItem[]>(data as NodeItem[]);
+  const [nodes] = useState<NodeItem[]>(data as unknown as NodeItem[]);
 
   const firstNodeId = useMemo(() => nodes[0].id, [nodes]);
   const [rootId, setRootId] = useState(firstNodeId);
