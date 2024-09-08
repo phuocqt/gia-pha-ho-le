@@ -62,7 +62,6 @@ const AuthButton = ({
   className,
   variant,
   size,
-  asChild = false,
   onClick,
   children,
   ...props

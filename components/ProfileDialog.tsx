@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/config/firebase";
-import { Separator } from "./ui/separator";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 
 export function ProfileDialog({
@@ -37,7 +36,6 @@ export function ProfileDialog({
   const [data, setData] = useState({ ...node });
   const [loggedInUser] = useAuthState(auth);
   const [mode, setMode] = useState("view");
-  const [error, setError] = useState<Record<keyof NodeItem, string>>();
   useEffect(() => {
     if (!!node) setData({ ...node });
     setMode("view");
@@ -248,6 +246,7 @@ export function ProfileDialog({
                 <GenderSelect
                   value={data?.gender || ""}
                   onChange={(value) =>
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     setData({ ...data, gender: value as any })
                   }
                 />

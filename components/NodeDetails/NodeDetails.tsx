@@ -1,11 +1,8 @@
 "use client";
 import React, { memo, useCallback } from "react";
-import classNames from "classnames";
 import type { Node } from "relatives-tree/lib/types";
 import { Relations } from "./Relations";
 import css from "./NodeDetails.module.css";
-import Image from "next/image";
-import plusIcon from "../../assets/plus.png";
 
 interface NodeDetailsProps {
   node: Readonly<Node>;

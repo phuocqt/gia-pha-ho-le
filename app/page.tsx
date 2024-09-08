@@ -3,7 +3,6 @@ import React, { useMemo, useState, useCallback } from "react";
 import ReactFamilyTree from "react-family-tree";
 import { PinchZoomPan } from "../PinchZoomPan/PinchZoomPan";
 import { FamilyNode } from "../components/FamilyNode/FamilyNode";
-import { NodeDetails } from "../components/NodeDetails/NodeDetails";
 import { NODE_WIDTH, NODE_HEIGHT } from "../const";
 import css from "../App.module.css";
 import { getNodeStyle } from "@/utils";
@@ -12,13 +11,13 @@ import { NodeItem } from "@/type";
 import { ProfileDialog } from "@/components/ProfileDialog";
 
 export default function App() {
-  const [nodes, setNodes] = useState<NodeItem[]>(data as NodeItem[]);
+  const [nodes] = useState<NodeItem[]>(data as NodeItem[]);
 
   const firstNodeId = useMemo(() => nodes[0].id, [nodes]);
   const [rootId, setRootId] = useState(firstNodeId);
 
   const [selectId, setSelectId] = useState<string>();
-  const [hoverId, setHoverId] = useState<string>();
+  const [hoverId] = useState<string>();
 
   const resetRootHandler = useCallback(
     () => setRootId(firstNodeId),
