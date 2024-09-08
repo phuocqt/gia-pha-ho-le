@@ -40,7 +40,7 @@ export default function Login() {
     <div className="h-full flex items-center">
       <Card className="mx-auto max-w-sm ">
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardTitle className="text-2xl">Đăng Nhập</CardTitle>
           <CardDescription>
             Chọn đăng nhập bằng gmail hoặc facebook
           </CardDescription>

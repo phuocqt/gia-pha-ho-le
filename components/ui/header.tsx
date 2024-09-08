@@ -74,14 +74,14 @@ export default function Header() {
           </div>
           <div className="mr-3">
             <Button>
-              <Link href="/contact">Liên Hệ</Link>
+              <Link href="/contact">Liên hệ</Link>
             </Button>
           </div>
         </div>
         {!isLogged ? (
           <div className="mr-3">
             <Button>
-              <Link href="/login">Login</Link>
+              <Link href="/login">Đăn nhập</Link>
             </Button>
           </div>
         ) : (
