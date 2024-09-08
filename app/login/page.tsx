@@ -17,9 +17,6 @@ import { auth } from "@/config/firebase";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-export const description =
-  "A login form with email and password. There's an option to login with Google and a link to sign up if you don't have an account.";
-
 export default function Login() {
   const [signInWithGoogle] = useSignInWithGoogle(auth);
   const [signInWithFacebook] = useSignInWithFacebook(auth);
