@@ -26,6 +26,7 @@ import { auth } from "@/config/firebase";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { addData, editData } from "@/actions";
 import { useToast } from "@/hooks/use-toast";
+import { v4 as uuidv4 } from "uuid";
 
 export function ProfileDialog({
   open,
@@ -79,10 +80,19 @@ export function ProfileDialog({
       });
     }
     if (mode === "addChild") {
+      const newId = uuidv4();
       const mom = data?.momId ? [{ id: data?.momId, type: "blood" }] : [];
       const tempData = {
         ...data,
+        id: newId,
         parents: [{ id: node?.id || "", type: "blood" }, ...mom],
+      };
+      const nodeData = {
+        ...node,
+        children: [
+          ...(node?.children || []),
+          { id: newId, type: data?.childType },
+        ],
       };
 
       addData(tempData as NodeItem, (type) => {
@@ -96,13 +106,21 @@ export function ProfileDialog({
             title: "Thêm Mới thành công",
           });
       });
+      editData(nodeData as NodeItem);
     }
     if (mode === "addSpouses") {
+      const newId = uuidv4();
+
       const tempData = {
         ...data,
+        id: newId,
         children: [...(node?.children || [])],
         spouses: [{ id: node?.id, type: "married" }],
       };
+      const nodeData = {
+        ...node,
+        spouses: [...(node?.spouses || []), [{ id: newId, type: "married" }]],
+      };
 
       addData(tempData as NodeItem, (type) => {
         if (type === "error")
@@ -115,6 +133,7 @@ export function ProfileDialog({
           });
         onClose?.();
       });
+      editData(nodeData as NodeItem);
     }
   };
 

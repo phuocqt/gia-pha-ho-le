@@ -8,7 +8,6 @@ import {
 } from "firebase/firestore";
 import { db } from "./config/firebase";
 import { NodeItem } from "./type";
-import { v4 as uuidv4 } from "uuid";
 
 export const generateQueryGetData = () => query(collection(db, "data"));
 
@@ -27,10 +26,8 @@ export const addData = async (
   callback: (type: "error" | "success") => void
 ) => {
   try {
-    const id = uuidv4();
-    await setDoc(doc(db, "data", id), {
+    await setDoc(doc(db, "data", data.id), {
       ...data,
-      id,
     });
     callback("success");
   } catch (error) {
@@ -40,14 +37,14 @@ export const addData = async (
 
 export const editData = async (
   data: NodeItem,
-  callback: (type: "error" | "success") => void
+  callback?: (type: "error" | "success") => void
 ) => {
   try {
     await setDoc(doc(db, "data", data?.id), {
       ...data,
     });
-    callback("success");
+    callback?.("success");
   } catch (error) {
-    callback("error");
+    callback?.("error");
   }
 };
