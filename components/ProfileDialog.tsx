@@ -155,7 +155,7 @@ export function ProfileDialog({
                 className="w-[120px] mb-2 "
                 onClick={() => {
                   setMode("edit");
-                  setData({ ...node });
+                  setData({ ...(node as any) });
                 }}
               >
                 Chỉnh sửa
