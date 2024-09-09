@@ -22,10 +22,20 @@ export const transformData = (
         ...item.data(),
       } as NodeItem)
   );
-export const addData = async (data: NodeItem) => {
-  await setDoc(doc(db, "data", uuidv4()), {
-    ...data,
-  });
+export const addData = async (
+  data: NodeItem,
+  callback: (type: "error" | "success") => void
+) => {
+  try {
+    const id = uuidv4();
+    await setDoc(doc(db, "data", id), {
+      ...data,
+      id,
+    });
+    callback("success");
+  } catch (error) {
+    callback("error");
+  }
 };
 
 export const editData = async (

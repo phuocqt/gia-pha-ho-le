@@ -1,5 +1,6 @@
 "use client";
-import React, { useMemo, useState, useCallback, useEffect } from "react";
+
+import React, { useMemo, useState, useEffect } from "react";
 import ReactFamilyTree from "react-family-tree";
 import { PinchZoomPan } from "../PinchZoomPan/PinchZoomPan";
 import { FamilyNode } from "../components/FamilyNode/FamilyNode";
@@ -32,11 +33,6 @@ export default function App() {
   const [selectId, setSelectId] = useState<string>();
   const [hoverId] = useState<string>();
 
-  const resetRootHandler = useCallback(
-    () => setRootId(firstNodeId),
-    [firstNodeId]
-  );
-
   const selected = useMemo(
     () => nodes.find((item) => item.id === selectId),
     [nodes, selectId]
@@ -54,6 +50,10 @@ export default function App() {
       console.log("error", error);
     }
   };
+
+  useEffect(() => {
+    console.log("Nodes updated:", nodes);
+  }, [nodes]);
 
   useEffect(() => {
     getData();
@@ -83,21 +83,9 @@ export default function App() {
           />
         </PinchZoomPan>
       )}
-      {rootId !== firstNodeId && (
-        <button className={css.reset} onClick={resetRootHandler}>
-          Reset
-        </button>
-      )}
-      {/* {selected && (
-        <NodeDetails
-          node={selected}
-          className={css.details}
-          onSelect={setSelectId}
-          onHover={setHoverId}
-          onClear={() => setHoverId(undefined)}
-        />
-      )} */}
+
       <ProfileDialog
+        allNode={nodes as NodeItem[]}
         node={selected}
         open={!!selected}
         onClose={(success) => {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { AuthButton, Button } from "@/components/ui/button";
 import {
@@ -23,19 +24,28 @@ import {
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/config/firebase";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
-import { editData } from "@/actions";
+import { addData, editData } from "@/actions";
 import { useToast } from "@/hooks/use-toast";
 
 export function ProfileDialog({
   open,
   onClose,
   node,
+  allNode,
 }: {
   onClose?: (type?: "success") => void;
   open?: boolean;
   node?: NodeItem;
+  allNode?: NodeItem[];
 }) {
-  const [data, setData] = useState({ ...node });
+  const [data, setData] = useState({
+    ...node,
+
+    children: node?.children || [],
+    siblings: node?.siblings || [],
+    spouses: node?.spouses || [],
+    parents: node?.parents || [],
+  });
   const [loggedInUser] = useAuthState(auth);
   const [mode, setMode] = useState<"view" | "edit" | "addSpouses" | "addChild">(
     "view"
@@ -45,6 +55,14 @@ export function ProfileDialog({
     if (!!node) setData({ ...node });
     setMode("view");
   }, [node, open]);
+  const isMultiMarried = (node?.spouses?.length || 0) > 1;
+  const spousesNode = (node?.spouses || []).map((item) => {
+    const itemDetail = allNode?.find((i) => i.id === item.id);
+    return {
+      ...itemDetail,
+      ...item,
+    };
+  });
 
   const onSubmit = () => {
     if (mode === "edit") {
@@ -60,23 +78,44 @@ export function ProfileDialog({
         onClose?.("success");
       });
     }
-    // if (mode === "addChild") {
-    //   const e = node?.spouses?.[0];
-    //   const tempData: NodeItem = {
-    //     ...data,
-    //     parents: [node?.id, no],
-    //   };
-    //   editData(data as NodeItem, (type) => {
-    //     if (type === "error")
-    //       toast({
-    //         title: "Đã có lỗi, vui lòng thử lại",
-    //       });
-    //     if (type === "success")
-    //       toast({
-    //         title: "Đã cập nhật thành công",
-    //       });
-    //   });
-    // }
+    if (mode === "addChild") {
+      const mom = data?.momId ? [{ id: data?.momId, type: "blood" }] : [];
+      const tempData = {
+        ...data,
+        parents: [{ id: node?.id || "", type: "blood" }, ...mom],
+      };
+
+      addData(tempData as NodeItem, (type) => {
+        if (type === "error")
+          toast({
+            title: "Đã có lỗi, vui lòng thử lại",
+          });
+        onClose?.();
+        if (type === "success")
+          toast({
+            title: "Thêm Mới thành công",
+          });
+      });
+    }
+    if (mode === "addSpouses") {
+      const tempData = {
+        ...data,
+        children: [...(node?.children || [])],
+        spouses: [{ id: node?.id, type: "married" }],
+      };
+
+      addData(tempData as NodeItem, (type) => {
+        if (type === "error")
+          toast({
+            title: "Đã có lỗi, vui lòng thử lại",
+          });
+        if (type === "success")
+          toast({
+            title: "Thêm Mới thành công",
+          });
+        onClose?.();
+      });
+    }
   };
 
   return (
@@ -114,36 +153,67 @@ export function ProfileDialog({
               <AuthButton
                 variant="default"
                 className="w-[120px] mb-2 "
-                onClick={() => setMode("edit")}
+                onClick={() => {
+                  setMode("edit");
+                  setData({ ...node });
+                }}
               >
                 Chỉnh sửa
               </AuthButton>
               {loggedInUser ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button className="w-[120px] mb-2 " variant="default">
-                      Thêm thành viên
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setMode("addSpouses");
-                      }}
-                    >
-                      Thêm Vợ/Chồng
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setMode("addChild");
-                      }}
-                    >
-                      Thêm Con
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                node?.gender === "female" ? (
+                  <Button
+                    onClick={() => {
+                      setMode("addChild");
+                    }}
+                    variant="default"
+                    className="w-[150px] mb-2 "
+                  >
+                    Thêm Con
+                  </Button>
+                ) : (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button className="w-[120px] mb-2 " variant="default">
+                        Thêm thành viên
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setMode("addSpouses");
+                          setData({
+                            gender: "female" as any,
+                            isAlive: true,
+                            children: [],
+                            siblings: [],
+                            spouses: [],
+                            parents: [],
+                          });
+                        }}
+                      >
+                        Thêm Vợ/Chồng
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setMode("addChild");
+                          setData({
+                            gender: "female" as any,
+                            isAlive: true,
+                            children: [],
+                            siblings: [],
+                            spouses: [],
+                            parents: [],
+                          });
+                        }}
+                      >
+                        Thêm Con
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )
               ) : (
                 <AuthButton variant="default" className="w-[150px] mb-2  ">
                   Thêm Thành viên
@@ -254,7 +324,6 @@ export function ProfileDialog({
                   alt={node?.name}
                 />
               </Avatar>
-
               <div className="flex items-center ml-2">
                 <Button className="w-full">
                   {mode === "edit" ? "Thay ảnh đại diện" : "Thêm ảnh đại diện"}
@@ -289,18 +358,69 @@ export function ProfileDialog({
                   }
                 />
               </div>
-
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="birthday" className="text-left">
-                  Quan hệ với {node?.gender === "male" ? "ông" : "bà"}{" "}
-                  {node?.name}
-                </Label>
-                <div className="">
-                  {mode === "addChild"
-                    ? `Con ${data?.gender === "male" ? "trai" : "gái"}`
-                    : "Vợ/Chồng"}
+              {mode === "addChild" && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="birthday" className="text-left">
+                    Quan hệ với {node?.gender === "male" ? "ông" : "bà"}{" "}
+                    {node?.name}
+                  </Label>
+                  <div className="">
+                    <RadioGroup
+                      value={data?.childType ? "blood" : "adopted"}
+                      className="flex"
+                    >
+                      <div
+                        className="flex items-center space-x-2 "
+                        onClick={() => {
+                          setData({ ...data, childType: "blood" });
+                        }}
+                      >
+                        <RadioGroupItem value="alive" id="r1" />
+                        <Label className="w-[100px]" htmlFor="r1">
+                          Con Ruột
+                        </Label>
+                      </div>
+                      <div
+                        className="flex items-center space-x-2"
+                        onClick={() => {
+                          setData({ ...data, childType: "adopted" });
+                        }}
+                      >
+                        <RadioGroupItem value="death" id="r2" />
+                        <Label className="w-[100px]" htmlFor="r2">
+                          Con Riêng
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {mode === "addChild" && isMultiMarried && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="birthday" className="text-left">
+                    Con của bà
+                  </Label>
+                  <div className="">
+                    <RadioGroup value={data?.momId} className="flex">
+                      {(spousesNode || []).map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-center space-x-2 "
+                          onClick={() => {
+                            setData({ ...data, momId: item.id });
+                          }}
+                        >
+                          <RadioGroupItem value="alive" id="r1" />
+                          <Label className="w-[100px]" htmlFor="r1">
+                            {item?.name || item?.id}
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="birthday" className="text-left">
@@ -413,7 +533,7 @@ export function ProfileDialog({
             </div>
           </div>
         )}
-        {mode === "edit" && (
+        {mode !== "view" && (
           <DialogFooter className="p-4">
             <Button onClick={onSubmit}>Lưu</Button>
           </DialogFooter>
