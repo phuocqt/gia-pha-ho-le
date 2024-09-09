@@ -64,10 +64,17 @@ export function ProfileDialog({
       ...item,
     };
   });
+  const childNode = (node?.children || []).map((item) => {
+    const itemDetail = allNode?.find((i) => i.id === item.id);
+    return {
+      ...itemDetail,
+      ...item,
+    };
+  });
 
   const onSubmit = () => {
     if (mode === "edit") {
-      editData(data as NodeItem, (type) => {
+      editData(node?.id || "", data as NodeItem, (type) => {
         if (type === "error")
           toast({
             title: "Đã có lỗi, vui lòng thử lại",
@@ -81,14 +88,17 @@ export function ProfileDialog({
     }
     if (mode === "addChild") {
       const newId = uuidv4();
-      const mom = data?.momId ? [{ id: data?.momId, type: "blood" }] : [];
+      const otherParent = data?.otherParentId
+        ? { id: data?.otherParentId, type: "blood" }
+        : (node?.spouses?.length || 0) > 0
+        ? { id: node?.spouses?.[0].id, type: "blood" }
+        : {};
       const tempData = {
         ...data,
         id: newId,
-        parents: [{ id: node?.id || "", type: "blood" }, ...mom],
+        parents: [{ id: node?.id || "", type: "blood" }, otherParent],
       };
-      const nodeData = {
-        ...node,
+      const childData = {
         children: [
           ...(node?.children || []),
           { id: newId, type: data?.childType },
@@ -100,13 +110,27 @@ export function ProfileDialog({
           toast({
             title: "Đã có lỗi, vui lòng thử lại",
           });
-        onClose?.();
         if (type === "success")
           toast({
             title: "Thêm Mới thành công",
           });
+        onClose?.("success");
       });
-      editData(nodeData as NodeItem);
+      // update parent
+      editData(node?.id || "", childData);
+      editData(otherParent?.id || "", childData);
+
+      // update children
+      if (node?.children && node.children.length > 0) {
+        childNode?.forEach((child) => {
+          editData(child.id, {
+            siblings: [
+              ...(child?.siblings || []),
+              { id: newId, type: data.childType },
+            ],
+          } as any);
+        });
+      }
     }
     if (mode === "addSpouses") {
       const newId = uuidv4();
@@ -119,7 +143,7 @@ export function ProfileDialog({
       };
       const nodeData = {
         ...node,
-        spouses: [...(node?.spouses || []), [{ id: newId, type: "married" }]],
+        spouses: [...(node?.spouses || []), { id: newId, type: "married" }],
       };
 
       addData(tempData as NodeItem, (type) => {
@@ -131,10 +155,30 @@ export function ProfileDialog({
           toast({
             title: "Thêm Mới thành công",
           });
-        onClose?.();
+        onClose?.("success");
       });
-      editData(nodeData as NodeItem);
+      editData(node?.id || "", nodeData as NodeItem);
     }
+  };
+
+  const initChild = {
+    otherParent: node?.gender === "male" ? node?.spouses?.[0] : node,
+    gender: "male" as any,
+    childType: "blood",
+    isAlive: true,
+    children: [],
+    siblings: [],
+    spouses: [],
+    parents: [],
+  };
+  const initSpouse = {
+    gender: node?.gender === "male" ? "female" : "male",
+    childType: "blood",
+    isAlive: true,
+    children: [],
+    siblings: [],
+    spouses: [],
+    parents: [],
   };
 
   return (
@@ -184,6 +228,7 @@ export function ProfileDialog({
                   <Button
                     onClick={() => {
                       setMode("addChild");
+                      setData(initChild);
                     }}
                     variant="default"
                     className="w-[150px] mb-2 "
@@ -202,14 +247,7 @@ export function ProfileDialog({
                       <DropdownMenuItem
                         onClick={() => {
                           setMode("addSpouses");
-                          setData({
-                            gender: "female" as any,
-                            isAlive: true,
-                            children: [],
-                            siblings: [],
-                            spouses: [],
-                            parents: [],
-                          });
+                          setData(initSpouse as any);
                         }}
                       >
                         Thêm Vợ/Chồng
@@ -220,6 +258,7 @@ export function ProfileDialog({
                           setMode("addChild");
                           setData({
                             gender: "female" as any,
+                            childType: "blood",
                             isAlive: true,
                             children: [],
                             siblings: [],
@@ -384,17 +423,14 @@ export function ProfileDialog({
                     {node?.name}
                   </Label>
                   <div className="">
-                    <RadioGroup
-                      value={data?.childType ? "blood" : "adopted"}
-                      className="flex"
-                    >
+                    <RadioGroup value={data?.childType} className="flex">
                       <div
                         className="flex items-center space-x-2 "
                         onClick={() => {
                           setData({ ...data, childType: "blood" });
                         }}
                       >
-                        <RadioGroupItem value="alive" id="r1" />
+                        <RadioGroupItem value="blood" id="r1" />
                         <Label className="w-[100px]" htmlFor="r1">
                           Con Ruột
                         </Label>
@@ -405,7 +441,7 @@ export function ProfileDialog({
                           setData({ ...data, childType: "adopted" });
                         }}
                       >
-                        <RadioGroupItem value="death" id="r2" />
+                        <RadioGroupItem value="adopted" id="r2" />
                         <Label className="w-[100px]" htmlFor="r2">
                           Con Riêng
                         </Label>
@@ -421,13 +457,13 @@ export function ProfileDialog({
                     Con của bà
                   </Label>
                   <div className="">
-                    <RadioGroup value={data?.momId} className="flex">
+                    <RadioGroup value={data?.otherParentId} className="flex">
                       {(spousesNode || []).map((item) => (
                         <div
                           key={item.id}
                           className="flex items-center space-x-2 "
                           onClick={() => {
-                            setData({ ...data, momId: item.id });
+                            setData({ ...data, otherParentId: item.id });
                           }}
                         >
                           <RadioGroupItem value="alive" id="r1" />

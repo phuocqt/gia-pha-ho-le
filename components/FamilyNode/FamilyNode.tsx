@@ -40,7 +40,8 @@ export const FamilyNode = React.memo(function FamilyNode({
         </Avatar>
         <div className="text-[7px] leading-[2] text-black">{node.name}</div>
         <div className="text-[5px] leading-[1] text-black">
-          test{node.birthday}
+          {node?.birthday || "-"} -{" "}
+          {node?.isAlive ? "nay" : node?.deathday || "-"}
         </div>
       </div>
     </div>

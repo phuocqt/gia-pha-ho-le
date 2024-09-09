@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   collection,
   doc,
@@ -36,13 +37,18 @@ export const addData = async (
 };
 
 export const editData = async (
-  data: NodeItem,
+  id: string,
+  data: any,
   callback?: (type: "error" | "success") => void
 ) => {
   try {
-    await setDoc(doc(db, "data", data?.id), {
-      ...data,
-    });
+    await setDoc(
+      doc(db, "data", id),
+      {
+        ...data,
+      },
+      { merge: true } // just update what is changed
+    );
     callback?.("success");
   } catch (error) {
     callback?.("error");

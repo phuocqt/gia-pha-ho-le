@@ -12,5 +12,5 @@ export interface NodeItem extends ExtNode {
   file?: File;
   isAlive?: boolean;
   childType?: string;
-  momId?: string;
+  otherParentId?: string;
 }
