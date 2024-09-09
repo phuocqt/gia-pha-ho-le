@@ -69,12 +69,7 @@ export default function Header() {
           </div>
           <div className="mr-3">
             <Button>
-              <Link href="/map">Sơ đồ phần mộ</Link>
-            </Button>
-          </div>
-          <div className="mr-3">
-            <Button>
-              <Link href="/contact">Liên hệ</Link>
+              <Link href="/map">Bản đồ phần mộ</Link>
             </Button>
           </div>
         </div>

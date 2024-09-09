@@ -27,6 +27,16 @@ import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { addData, editData } from "@/actions";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import avatarIcon from "../assets/avatar.jpg";
 
 export function ProfileDialog({
   open,
@@ -61,14 +71,12 @@ export function ProfileDialog({
     const itemDetail = allNode?.find((i) => i.id === item.id);
     return {
       ...itemDetail,
-      ...item,
     };
   });
   const childNode = (node?.children || []).map((item) => {
     const itemDetail = allNode?.find((i) => i.id === item.id);
     return {
       ...itemDetail,
-      ...item,
     };
   });
 
@@ -120,10 +128,10 @@ export function ProfileDialog({
       editData(node?.id || "", childData);
       editData(otherParent?.id || "", childData);
 
-      // update children
+      // update siblings
       if (node?.children && node.children.length > 0) {
         childNode?.forEach((child) => {
-          editData(child.id, {
+          editData(child.id || "", {
             siblings: [
               ...(child?.siblings || []),
               { id: newId, type: data.childType },
@@ -162,7 +170,7 @@ export function ProfileDialog({
   };
 
   const initChild = {
-    otherParent: node?.gender === "male" ? node?.spouses?.[0] : node,
+    otherParent: node?.spouses?.[0],
     gender: "male" as any,
     childType: "blood",
     isAlive: true,
@@ -200,7 +208,7 @@ export function ProfileDialog({
                 } mb-1 mt-2 w-[120px] h-[120px] rounded-full overflow-hidden `}
               >
                 <AvatarImage
-                  src="https://github.com/shadcn.png"
+                  src={node?.photoURL || avatarIcon.src}
                   alt={node?.name}
                 />
               </Avatar>
@@ -378,7 +386,7 @@ export function ProfileDialog({
                 } mb-1 w-[120px] h-[120px] rounded-full overflow-hidden mt-2`}
               >
                 <AvatarImage
-                  src="https://github.com/shadcn.png"
+                  src={node?.photoURL || avatarIcon.src}
                   alt={node?.name}
                 />
               </Avatar>
@@ -451,31 +459,42 @@ export function ProfileDialog({
                 </div>
               )}
 
-              {mode === "addChild" && isMultiMarried && (
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="birthday" className="text-left">
-                    Con của bà
-                  </Label>
-                  <div className="">
-                    <RadioGroup value={data?.otherParentId} className="flex">
-                      {(spousesNode || []).map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex items-center space-x-2 "
-                          onClick={() => {
-                            setData({ ...data, otherParentId: item.id });
-                          }}
-                        >
-                          <RadioGroupItem value="alive" id="r1" />
-                          <Label className="w-[100px]" htmlFor="r1">
-                            {item?.name || item?.id}
-                          </Label>
-                        </div>
-                      ))}
-                    </RadioGroup>
+              {(mode === "addChild" || mode === "edit") &&
+                isMultiMarried &&
+                node?.gender === "male" && (
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="birthday" className="text-left">
+                      Con của bà
+                    </Label>
+                    <div className="">
+                      <Select
+                        value={data?.otherParentId}
+                        onValueChange={(value) =>
+                          setData({ ...data, otherParentId: value })
+                        }
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue
+                            placeholder={
+                              spousesNode.find(
+                                (item) => item.id === data?.otherParentId
+                              )?.name
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            {(spousesNode || []).map((item) => (
+                              <SelectItem key={item.id} value={item.id || ""}>
+                                {item?.name || ""}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="birthday" className="text-left">

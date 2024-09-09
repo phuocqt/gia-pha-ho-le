@@ -13,4 +13,5 @@ export interface NodeItem extends ExtNode {
   isAlive?: boolean;
   childType?: string;
   otherParentId?: string;
+  photoURL?: string;
 }

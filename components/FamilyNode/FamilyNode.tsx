@@ -2,6 +2,7 @@
 import { NodeItem } from "@/type";
 import { Avatar, AvatarImage } from "@radix-ui/react-avatar";
 import React, { useCallback } from "react";
+import userIcon from "../../assets/avatar.jpg";
 
 interface FamilyNodeProps {
   node: NodeItem;
@@ -36,7 +37,7 @@ export const FamilyNode = React.memo(function FamilyNode({
               : "border-2 border-[#fdaed8] bg-[#f0ffff]"
           } mb-1 w-[20px] h-[20px] rounded-full overflow-hidden`}
         >
-          <AvatarImage src="https://github.com/shadcn.png" alt={node.name} />
+          <AvatarImage src={node?.photoURL || userIcon.src} alt={node.name} />
         </Avatar>
         <div className="text-[7px] leading-[2] text-black">{node.name}</div>
         <div className="text-[5px] leading-[1] text-black">
