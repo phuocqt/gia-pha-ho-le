@@ -14,9 +14,9 @@ const ValidatedYearInput: React.FC<ValidatedYearInputProps> = ({
   onChange,
   className,
 }) => {
-  const currentYear = new Date().getFullYear();
-
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    console.log(e.target.value);
+
     const inputValue = e.target.value;
 
     const numericValue = inputValue.replace(/\D/g, "");
@@ -25,7 +25,7 @@ const ValidatedYearInput: React.FC<ValidatedYearInputProps> = ({
 
     const year = parseInt(truncatedValue, 10);
 
-    if (!isNaN(year) && year >= 1000 && year <= currentYear) {
+    if (!isNaN(year)) {
       onChange(year.toString());
     } else if (truncatedValue === "") {
       onChange("");
