@@ -58,8 +58,6 @@ export function ProfileDialog({
     parents: node?.parents || [],
   });
 
-  const [detail, setDetail] = useState({ ...node });
-
   const [loggedInUser] = useAuthState(auth);
   const [mode, setMode] = useState<"view" | "edit" | "addSpouses" | "addChild">(
     "view"
@@ -74,47 +72,40 @@ export function ProfileDialog({
 
   const { toast } = useToast();
   useEffect(() => {
-    if (!!node)
-      setDetail({
-        ...node,
-        children: node?.children || [],
-        siblings: node?.siblings || [],
-        spouses: node?.spouses || [],
-        parents: node?.parents || [],
-      });
-    setMode("view");
+    if (!!node) setMode("view");
   }, [node, open]);
 
-  const isMultiMarried = (detail?.spouses?.length || 0) > 1;
-  const spousesNode = (detail?.spouses || []).map((item) => {
+  const isLeader = !!node?.parents?.length;
+  const isRootNode = allNode?.length === 1;
+  const isMultiMarried = (node?.spouses?.length || 0) > 1;
+  const spousesNode = (node?.spouses || []).map((item) => {
     const itemDetail = allNode?.find((i) => i.id === item.id);
     return {
       ...itemDetail,
     };
   });
-  const childNode = (detail?.children || []).map((item) => {
+  const childNode = (node?.children || []).map((item) => {
     const itemDetail = allNode?.find((i) => i.id === item.id);
     return {
       ...itemDetail,
     };
   });
 
-  const itsMe = detail?.userId === loggedInUser?.uid;
+  const itsMe = data?.userId === loggedInUser?.uid;
 
   const handleAddMe = () => {
     if (itsMe) {
       const removeMe = () => {
-        editData(detail?.id || "", {
+        editData(node?.id || "", {
           userId: "",
           photoURL: "",
           editUser: loggedInUser?.uid,
         });
-        setDetail({ ...detail, photoURL: "", userId: "" });
         setData({ ...data, photoURL: "", userId: "" });
       };
       setOpenAlert({
-        messenger: `${detail?.gender === "male" ? "Ông " : "Bà "} ${
-          detail?.name
+        messenger: `${node?.gender === "male" ? "Ông " : "Bà "} ${
+          node?.name
         } không phải là bạn đúng không?`,
         onConfirm: removeMe,
       });
@@ -129,15 +120,10 @@ export function ProfileDialog({
           });
         }
 
-        editData(detail?.id || "", {
+        editData(node?.id || "", {
           userId: loggedInUser?.uid,
           photoURL: loggedInUser?.photoURL,
           editUser: loggedInUser?.uid,
-        });
-        setDetail({
-          ...detail,
-          photoURL: loggedInUser?.photoURL as string,
-          userId: loggedInUser?.uid,
         });
         setData({
           ...data,
@@ -146,8 +132,8 @@ export function ProfileDialog({
         });
       };
       setOpenAlert({
-        messenger: `${detail?.gender === "male" ? "Ông " : "Bà "} ${
-          detail?.name
+        messenger: `${node?.gender === "male" ? "Ông " : "Bà "} ${
+          node?.name
         } là bạn `,
         onConfirm: addMe,
       });
@@ -157,7 +143,7 @@ export function ProfileDialog({
   const onSubmit = () => {
     if (mode === "edit") {
       editData(
-        detail?.id || "",
+        node?.id || "",
         { ...data, editUser: loggedInUser?.uid } as NodeItem,
         (type) => {
           if (type === "error")
@@ -176,19 +162,21 @@ export function ProfileDialog({
       const newId = uuidv4();
       const otherParent = data?.otherParentId
         ? { id: data?.otherParentId, type: "blood" }
-        : (detail?.spouses?.length || 0) > 0
-        ? { id: detail?.spouses?.[0].id, type: "blood" }
+        : (node?.spouses?.length || 0) > 0
+        ? { id: node?.spouses?.[0].id, type: "blood" }
         : {};
       const tempData = {
         ...data,
-        createUser: loggedInUser?.uid,
         id: newId,
-        parents: [{ id: detail?.id || "", type: "blood" }, otherParent],
+        createUser: loggedInUser?.uid,
+        parents: otherParent?.id
+          ? [{ id: node?.id || "", type: "blood" }, otherParent]
+          : [{ id: node?.id || "", type: "blood" }],
       };
       const childData = {
         editUser: loggedInUser?.uid,
         children: [
-          ...(detail?.children || []),
+          ...(node?.children || []),
           { id: newId, type: data?.childType },
         ],
       };
@@ -209,7 +197,7 @@ export function ProfileDialog({
       editData(otherParent?.id || "", childData);
 
       // update siblings
-      if (detail?.children && detail.children.length > 0) {
+      if (node?.children && node?.children.length > 0) {
         childNode?.forEach((child) => {
           editData(child.id || "", {
             siblings: [
@@ -226,11 +214,9 @@ export function ProfileDialog({
       const tempData = {
         ...data,
         id: newId,
-        children: [...(detail?.children || [])],
-        spouses: [{ id: detail?.id, type: "married" }],
       };
       const nodeData = {
-        ...detail,
+        ...node,
         spouses: [...(node?.spouses || []), { id: newId, type: "married" }],
       };
 
@@ -245,12 +231,12 @@ export function ProfileDialog({
           });
         onClose?.("success");
       });
-      editData(detail?.id || "", nodeData as NodeItem);
+      editData(node?.id || "", nodeData as NodeItem);
     }
   };
 
   const initChild = {
-    otherParent: detail?.spouses?.[0],
+    otherParentId: node?.spouses?.[0]?.id || "",
     gender: "male" as any,
     childType: "blood",
     isAlive: true,
@@ -260,12 +246,12 @@ export function ProfileDialog({
     parents: [],
   };
   const initSpouse = {
-    gender: detail?.gender === "male" ? "female" : "male",
+    gender: node?.gender === "male" ? "female" : "male",
     childType: "blood",
     isAlive: true,
-    children: [],
     siblings: [],
-    spouses: [],
+    children: [...(node?.children || [])],
+    spouses: [{ id: node?.id, type: "married" }],
     parents: [],
   };
 
@@ -283,21 +269,21 @@ export function ProfileDialog({
             <div className=" flex flex-col justify-center bg-[#a15e1f]  text-white items-center gap-1 mb-3">
               <Avatar
                 className={`${
-                  detail?.gender === "male"
+                  node?.gender === "male"
                     ? "border-2 border-[#a4ecff] bg-[#fff8dc]"
                     : "border-2 border-[#fdaed8] bg-[#f0ffff]"
                 } mb-1 mt-2 w-[120px] h-[120px] rounded-full overflow-hidden `}
               >
                 <AvatarImage
-                  src={detail?.photoURL || avatarIcon.src}
-                  alt={detail?.name}
+                  src={node?.photoURL || avatarIcon.src}
+                  alt={node?.name}
                 />
               </Avatar>
-              <div className="text-[20px] font-bold">{detail?.name}</div>
-              {(detail?.birthday || detail?.deathday) && (
+              <div className="text-[20px] font-bold">{node?.name}</div>
+              {(node?.birthday || node?.deathday) && (
                 <div className="text-[16px]">
-                  {detail?.birthday || "-"} -{" "}
-                  {detail?.isAlive ? "nay" : detail?.deathday || "-"}
+                  {node?.birthday || "-"} -{" "}
+                  {node?.isAlive ? "nay" : node?.deathday || "-"}
                 </div>
               )}
             </div>
@@ -307,13 +293,13 @@ export function ProfileDialog({
                 className="w-[120px] mb-2 "
                 onClick={() => {
                   setMode("edit");
-                  setData({ ...(detail as any) });
+                  setData({ ...(node as any) });
                 }}
               >
                 Chỉnh sửa
               </AuthButton>
               {loggedInUser ? (
-                detail?.gender === "female" ? (
+                !isLeader || isRootNode ? (
                   <Button
                     onClick={() => {
                       setMode("addChild");
@@ -339,21 +325,13 @@ export function ProfileDialog({
                           setData(initSpouse as any);
                         }}
                       >
-                        Thêm Vợ/Chồng
+                        Thêm {`${node?.gender === "male" ? "Vợ" : "Chồng"}`}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => {
                           setMode("addChild");
-                          setData({
-                            gender: "female" as any,
-                            childType: "blood",
-                            isAlive: true,
-                            children: [],
-                            siblings: [],
-                            spouses: [],
-                            parents: [],
-                          });
+                          setData(initChild);
                         }}
                       >
                         Thêm Con
@@ -375,7 +353,7 @@ export function ProfileDialog({
                 >
                   Tên:
                 </Label>
-                <div className="">{detail?.name}</div>
+                <div className="">{node?.name}</div>
               </div>
               <div className="flex items-center ">
                 <Label
@@ -385,8 +363,8 @@ export function ProfileDialog({
                   Giới tính:
                 </Label>
                 <div className="">
-                  {detail?.gender
-                    ? detail.gender === "male"
+                  {node?.gender
+                    ? node?.gender === "male"
                       ? "Nam"
                       : "Nữ"
                     : "-"}
@@ -399,9 +377,9 @@ export function ProfileDialog({
                 >
                   Năm sinh:
                 </Label>
-                <div className="">{detail?.birthday || "-"}</div>
+                <div className="">{node?.birthday || "-"}</div>
               </div>
-              {detail?.isAlive && (
+              {node?.isAlive && (
                 <div className="flex items-center ">
                   <Label
                     htmlFor="name"
@@ -409,7 +387,7 @@ export function ProfileDialog({
                   >
                     Năm mất:
                   </Label>
-                  <div className="">{detail?.deathday || "-"}</div>
+                  <div className="">{node?.deathday || "-"}</div>
                 </div>
               )}
               <div className="flex items-center ">
@@ -419,7 +397,7 @@ export function ProfileDialog({
                 >
                   Nơi Sinh:
                 </Label>
-                <div className="">{detail?.birthPlace || "-"}</div>
+                <div className="">{node?.birthPlace || "-"}</div>
               </div>
               <div className="flex items-center ">
                 <Label
@@ -428,7 +406,7 @@ export function ProfileDialog({
                 >
                   Địa chỉ:
                 </Label>
-                <div className="">{detail?.address || "-"}</div>
+                <div className="">{node?.address || "-"}</div>
               </div>
               <div className="flex items-center ">
                 <Label
@@ -437,7 +415,7 @@ export function ProfileDialog({
                 >
                   Số điện thoại:
                 </Label>
-                <div className="">{detail?.phoneNum || "-"}</div>
+                <div className="">{node?.phoneNum || "-"}</div>
               </div>
               <div className="flex items-center ">
                 <Label
@@ -446,7 +424,7 @@ export function ProfileDialog({
                 >
                   Khác:
                 </Label>
-                <div className="">{detail?.note || "-"}</div>
+                <div className="">{node?.note || "-"}</div>
               </div>
             </div>
           </div>
@@ -546,10 +524,10 @@ export function ProfileDialog({
 
               {(mode === "addChild" || mode === "edit") &&
                 isMultiMarried &&
-                node?.gender === "male" && (
+                isLeader && (
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="birthday" className="text-left">
-                      Con của bà
+                      Con của {`${node?.gender === "male" ? "bà" : "ông"}`}
                     </Label>
                     <div className="">
                       <Select
