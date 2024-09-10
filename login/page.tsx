@@ -16,6 +16,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import GoogleIcon from "../assets/Google Logo.png";
+import FacebookIcon from "../assets/Facebook Logo.png";
+import Image from "next/image";
 
 export const description =
   "A login form with email and password. There's an option to login with Google and a link to sign up if you don't have an account.";
@@ -74,15 +77,21 @@ export default function Login() {
             {/* <Button type="submit" className="w-full">
               Login
             </Button> */}
-            <Button variant="outline" className="w-full" onClick={signInGoogle}>
-              Đăng nhập bằng Google
+            <Button
+              variant="outline"
+              className="w-full "
+              onClick={signInGoogle}
+            >
+              <Image src={GoogleIcon.src} alt="google" /> Đăng nhập bằng Đăng
+              nhập bằng Google
             </Button>
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full bg-[#4285F4]"
               onClick={signInFacebook}
             >
-              Đăng nhập bằng Facebook
+              <Image src={FacebookIcon.src} alt="facebook" /> Đăng nhập bằng
+              Facebook
             </Button>
           </div>
           {/* <div className="mt-4 text-center text-sm">
