@@ -37,7 +37,7 @@ export function Alert({
         <AlertDialogFooter>
           <AlertDialogCancel onClick={() => onClose?.()}>Huỷ</AlertDialogCancel>
           <AlertDialogAction onClick={() => onContinue?.()}>
-            Tiếp tục
+            OK
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

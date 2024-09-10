@@ -1,16 +1,16 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import { getAllData } from "@/actions";
+import { ProfileDialog } from "@/components/ProfileDialog";
+import { NodeItem } from "@/type";
+import { getNodeStyle } from "@/utils";
+import { useEffect, useMemo, useState } from "react";
 import ReactFamilyTree from "react-family-tree";
+import css from "../App.module.css";
 import { PinchZoomPan } from "../PinchZoomPan/PinchZoomPan";
 import { FamilyNode } from "../components/FamilyNode/FamilyNode";
-import { NODE_WIDTH, NODE_HEIGHT } from "../const";
-import css from "../App.module.css";
-import { getNodeStyle } from "@/utils";
-import { NodeItem } from "@/type";
-import { ProfileDialog } from "@/components/ProfileDialog";
-import { generateQueryGetData, transformData } from "@/actions";
-import { getDocs } from "firebase/firestore";
+import { NODE_HEIGHT, NODE_WIDTH } from "../const";
 
 export default function App() {
   const [nodes, setNodes] = useState<NodeItem[]>([
@@ -39,21 +39,9 @@ export default function App() {
   );
 
   const getData = async () => {
-    const queryData = generateQueryGetData();
-    try {
-      const dataSnapShot = await getDocs(queryData);
-      const data = transformData(dataSnapShot);
-      console.log("data", data);
-
-      setNodes(data as unknown as NodeItem[]);
-    } catch (error) {
-      console.log("error", error);
-    }
+    const data = await getAllData("data");
+    setNodes(data as unknown as NodeItem[]);
   };
-
-  useEffect(() => {
-    console.log("Nodes updated:", nodes);
-  }, [nodes]);
 
   useEffect(() => {
     getData();

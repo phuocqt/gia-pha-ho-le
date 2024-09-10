@@ -44,6 +44,7 @@ export default function Header() {
             photoURL: loggedInUser?.photoURL,
             name: loggedInUser?.displayName,
             lastLoginAt: serverTimestamp(),
+            id: loggedInUser?.uid,
           },
           { merge: true } // just update what is changed
         );
