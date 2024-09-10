@@ -32,7 +32,6 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
@@ -380,14 +379,14 @@ export function ProfileDialog({
             <div className="flex justify-center">
               <Avatar
                 className={`${
-                  node?.gender === "male"
+                  data?.gender === "male"
                     ? "border-2 border-[#a4ecff] bg-[#fff8dc]"
                     : "border-2 border-[#fdaed8] bg-[#f0ffff]"
                 } mb-1 w-[120px] h-[120px] rounded-full overflow-hidden mt-2`}
               >
                 <AvatarImage
-                  src={node?.photoURL || avatarIcon.src}
-                  alt={node?.name}
+                  src={data?.photoURL || avatarIcon.src}
+                  alt={data?.name}
                 />
               </Avatar>
               <div className="flex items-center ml-2">
