@@ -52,13 +52,14 @@ export const addData = async (
 };
 
 export const editData = async (
+  collection: string,
   id: string,
   data: any,
   callback?: (type: "error" | "success") => void
 ) => {
   try {
     await setDoc(
-      doc(db, "data", id),
+      doc(db, collection, id),
       {
         ...data,
       },
@@ -126,6 +127,22 @@ export async function deleteItem(
     console.log(`delete success ${id} from collection ${collection}`);
   } catch (error) {
     console.error("Lỗi khi xóa item:", error);
+    throw error;
+  }
+}
+
+export async function deleteMultipleDocs(ids: string[]) {
+  try {
+    const deletePromises = ids.map((id) => {
+      const docRef = doc(db, "data", id);
+      return deleteDoc(docRef);
+    });
+
+    await Promise.all(deletePromises);
+
+    console.log("Đã xóa các tài liệu thành công!");
+  } catch (error) {
+    console.error("Lỗi khi xóa tài liệu:", error);
     throw error;
   }
 }

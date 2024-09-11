@@ -29,7 +29,7 @@ export const AlertModal: React.FC<AlertModalProps> = ({
   return (
     <Modal
       title="Bạn có chắc chắn không?"
-      description="Hành động này có thể lỗi."
+      description="Hành động này có thể l."
       isOpen={isOpen}
       onClose={onClose}
     >

@@ -24,7 +24,7 @@ import {
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/config/firebase";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
-import { addData, editData, getDataByField } from "@/actions";
+import { addData, deleteItem, editData, getDataByField } from "@/actions";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -38,6 +38,7 @@ import {
 import avatarIcon from "../assets/avatar.jpg";
 import { Alert } from "./ui/alert";
 import ValidatedYearInput from "./ui/validateYearInput";
+import { deleteNode } from "@/utils";
 
 export function ProfileDialog({
   open,
@@ -96,7 +97,7 @@ export function ProfileDialog({
   const handleAddMe = () => {
     if (itsMe) {
       const removeMe = () => {
-        editData(node?.id || "", {
+        editData("data", node?.id || "", {
           userId: "",
           photoURL: "",
           editUser: loggedInUser?.uid,
@@ -113,14 +114,14 @@ export function ProfileDialog({
       const addMe = async () => {
         const itsMeData = await getDataByField("userId", loggedInUser?.uid);
         if (itsMeData?.[0]?.id) {
-          editData(itsMeData?.[0]?.id, {
+          editData("data", itsMeData?.[0]?.id, {
             userId: "",
             photoURL: "",
             editUser: loggedInUser?.uid,
           });
         }
 
-        editData(node?.id || "", {
+        editData("data", node?.id || "", {
           userId: loggedInUser?.uid,
           photoURL: loggedInUser?.photoURL,
           editUser: loggedInUser?.uid,
@@ -143,6 +144,7 @@ export function ProfileDialog({
   const onSubmit = () => {
     if (mode === "edit") {
       editData(
+        "data",
         node?.id || "",
         { ...data, editUser: loggedInUser?.uid } as NodeItem,
         (type) => {
@@ -193,13 +195,13 @@ export function ProfileDialog({
         onClose?.("success");
       });
       // update parent
-      editData(node?.id || "", childData);
-      editData(otherParent?.id || "", childData);
+      editData("data", node?.id || "", childData);
+      editData("data", otherParent?.id || "", childData);
 
       // update siblings
       if (node?.children && node?.children.length > 0) {
         childNode?.forEach((child) => {
-          editData(child.id || "", {
+          editData("data", child.id || "", {
             siblings: [
               ...(child?.siblings || []),
               { id: newId, type: data.childType },
@@ -231,7 +233,7 @@ export function ProfileDialog({
           });
         onClose?.("success");
       });
-      editData(node?.id || "", nodeData as NodeItem);
+      editData("data", node?.id || "", nodeData as NodeItem);
     }
   };
 
@@ -290,7 +292,7 @@ export function ProfileDialog({
             <div className="flex gap-4 justify-center items-center">
               <AuthButton
                 variant="default"
-                className="w-[120px] mb-2 "
+                className="w-[100px] mb-2 "
                 onClick={() => {
                   setMode("edit");
                   setData({ ...(node as any) });
@@ -300,49 +302,76 @@ export function ProfileDialog({
               </AuthButton>
               {loggedInUser ? (
                 !isLeader || isRootNode ? (
-                  <Button
-                    onClick={() => {
-                      setMode("addChild");
-                      setData(initChild);
-                    }}
-                    variant="default"
-                    className="w-[150px] mb-2 "
-                  >
-                    Thêm Con
-                  </Button>
+                  <>
+                    <Button
+                      onClick={() => {
+                        setMode("addChild");
+                        setData(initChild);
+                      }}
+                      variant="default"
+                      className="w-[100px] mb-2 "
+                    >
+                      Thêm Con
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        if (allNode && node) deleteNode(allNode, node);
+                      }}
+                      variant="default"
+                      className="w-[70px] mb-2 "
+                    >
+                      Xoá
+                    </Button>
+                  </>
                 ) : (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button className="w-[120px] mb-2 " variant="default">
-                        Thêm thành viên
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setMode("addSpouses");
-                          setData(initSpouse as any);
-                        }}
-                      >
-                        Thêm {`${node?.gender === "male" ? "Vợ" : "Chồng"}`}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setMode("addChild");
-                          setData(initChild);
-                        }}
-                      >
-                        Thêm Con
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button className="w-[120px] mb-2 " variant="default">
+                          Thêm thành viên
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setMode("addSpouses");
+                            setData(initSpouse as any);
+                          }}
+                        >
+                          Thêm {`${node?.gender === "male" ? "Vợ" : "Chồng"}`}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setMode("addChild");
+                            setData(initChild);
+                          }}
+                        >
+                          Thêm Con
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Button
+                      onClick={() => {
+                        if (allNode && node) deleteNode(allNode, node);
+                      }}
+                      variant="default"
+                      className="w-[70px] mb-2 "
+                    >
+                      Xoá
+                    </Button>
+                  </>
                 )
               ) : (
-                <AuthButton variant="default" className="w-[150px] mb-2  ">
-                  Thêm Thành viên
-                </AuthButton>
+                <>
+                  <AuthButton variant="default" className="w-[150px] mb-2  ">
+                    Thêm Thành viên
+                  </AuthButton>
+                  <AuthButton variant="default" className="w-[150px] mb-2  ">
+                    Xoá
+                  </AuthButton>
+                </>
               )}
             </div>
             <div className="px-4 py-5 text-[16px]">

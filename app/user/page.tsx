@@ -12,10 +12,13 @@ export default function Users() {
   const [loggedInUser] = useAuthState(auth);
   const router = useRouter();
 
+  const getUsers = async () => {
+    const usersList = await getAllData("users");
+    setUsers(usersList as User[]);
+  };
+
   useEffect(() => {
     (async () => {
-      if (!loggedInUser) router.push("/");
-
       if (loggedInUser) {
         if (!loggedInUser) router.push("/login");
         const user = await getDataById("users", loggedInUser?.uid || "");
@@ -24,16 +27,19 @@ export default function Users() {
           user?.role !== "supperAdmin"
         )
           router.push("/");
-        const usersList = await getAllData("users");
-        setUsers(usersList as User[]);
+        getUsers();
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loggedInUser]);
 
+  const handleChange = () => {
+    getUsers();
+  };
+
   return (
     <div className="space-y-2 p-10">
-      <UserClient data={users as User[]} />
+      <UserClient data={users as User[]} onChange={() => handleChange()} />
     </div>
   );
 }
