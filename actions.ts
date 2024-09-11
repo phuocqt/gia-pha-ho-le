@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   collection,
+  deleteDoc,
   doc,
   DocumentData,
   getDoc,
@@ -20,8 +21,8 @@ export const transformData = (
   snapshot: QuerySnapshot<DocumentData, DocumentData>
 ) =>
   snapshot.docs.map((item) => ({
-    id: item.id,
-    ...item.data(),
+    id: item?.id,
+    ...item?.data(),
   }));
 
 export async function getAllData(collectionName: string) {
@@ -29,7 +30,6 @@ export async function getAllData(collectionName: string) {
   try {
     const dataSnapShot = await getDocs(queryData);
     const data = transformData(dataSnapShot);
-    console.log("data", data);
     return data;
   } catch (error) {
     console.log("error", error);
@@ -71,9 +71,9 @@ export const editData = async (
   }
 };
 
-export async function getDataById(id: string) {
+export async function getDataById(collection: string, id: string) {
   try {
-    const docRef = doc(db, "data", id);
+    const docRef = doc(db, collection, id);
 
     const docSnap = await getDoc(docRef);
 
@@ -110,6 +110,22 @@ export async function getDataByField(fieldName: string, fieldValue: any) {
     }
   } catch (error) {
     console.error("ERROR:", error);
+    throw error;
+  }
+}
+
+export async function deleteItem(
+  collection: string,
+  id: string
+): Promise<void> {
+  try {
+    const docRef = doc(db, collection, id);
+
+    await deleteDoc(docRef);
+
+    console.log(`delete success ${id} from collection ${collection}`);
+  } catch (error) {
+    console.error("Lỗi khi xóa item:", error);
     throw error;
   }
 }

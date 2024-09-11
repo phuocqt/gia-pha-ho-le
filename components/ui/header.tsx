@@ -17,8 +17,11 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { getDataById } from "@/actions";
+import { useRouter } from "next/navigation";
 
 export default function Header() {
+  const router = useRouter();
   const logout = async () => {
     try {
       await signOut(auth);
@@ -33,6 +36,7 @@ export default function Header() {
     }
   };
   const [loggedInUser] = useAuthState(auth);
+  const [userRole, setUserRole] = useState();
   const [isLogged, setIsLogged] = useState(false);
   useEffect(() => {
     const setUserInDb = async () => {
@@ -48,6 +52,13 @@ export default function Header() {
           },
           { merge: true } // just update what is changed
         );
+        const user = await getDataById("users", loggedInUser?.uid || "");
+        setUserRole(user?.role);
+        if (
+          window.location.pathname === "/user" &&
+          user?.role !== "supperAdmin"
+        )
+          router.push("/");
       } catch (error) {
         console.log("ERROR SETTING USER INFO IN DB", error);
       }
@@ -57,6 +68,7 @@ export default function Header() {
       setUserInDb();
       setIsLogged(true);
     } else setIsLogged(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loggedInUser]);
 
   return (
@@ -73,6 +85,13 @@ export default function Header() {
               <Link href="/map">Bản đồ phần mộ</Link>
             </Button>
           </div>
+          {loggedInUser && userRole === "supperAdmin" && (
+            <div className="mr-3">
+              <Button>
+                <Link href="/user">Quản lý User</Link>
+              </Button>
+            </div>
+          )}
         </div>
         {!isLogged ? (
           <div className="mr-3">

@@ -10,7 +10,7 @@ import ReactFamilyTree from "react-family-tree";
 import css from "../App.module.css";
 import { PinchZoomPan } from "../PinchZoomPan/PinchZoomPan";
 import { FamilyNode } from "../components/FamilyNode/FamilyNode";
-import { NODE_HEIGHT, NODE_WIDTH } from "../const";
+import { NODE_HEIGHT, NODE_WIDTH } from "../constants/const";
 
 export default function App() {
   const [nodes, setNodes] = useState<NodeItem[]>([

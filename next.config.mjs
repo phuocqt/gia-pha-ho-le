@@ -8,6 +8,12 @@ const nextConfig = {
         port: "",
         pathname: "/*/**",
       },
+      {
+        protocol: "https",
+        hostname: "https://www.svgrepo.com",
+        port: "",
+        pathname: "/*/**",
+      },
     ],
   },
 };
