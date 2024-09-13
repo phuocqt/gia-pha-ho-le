@@ -10,6 +10,7 @@ import {
   deleteDoc,
   QuerySnapshot,
   DocumentData,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "./config/firebase";
 import { NodeItem, User } from "./type";
@@ -50,6 +51,7 @@ class actionStore {
     try {
       await setDoc(doc(db, "data", data.id), {
         ...data,
+        hasAddReq: this.loggedUser?.role === "user" ? true : false,
       });
       callback("success");
     } catch (error) {
@@ -65,12 +67,14 @@ class actionStore {
     callback?: (type: "error" | "success") => void
   ) {
     try {
-      console.log("edit data", data);
+      console.log("edit data", data, this.loggedUser);
 
       await setDoc(
         doc(db, collection, id),
         {
           ...data,
+          hasEditReq: this.loggedUser?.role === "user" ? true : false,
+          editUser: this.loggedUser?.name || this.loggedUser?.id,
         },
         { merge: true }
       );
@@ -127,10 +131,21 @@ class actionStore {
     callback?: () => void
   ): Promise<void> {
     try {
-      const docRef = doc(db, collection, id);
-      await deleteDoc(docRef);
-      console.log(`delete success ${id} from collection ${collection}`);
-      callback?.();
+      if (this.loggedUser?.role !== "user") {
+        const docRef = doc(db, collection, id);
+        await deleteDoc(docRef);
+        console.log(`delete success ${id} from collection ${collection}`);
+        callback?.();
+      } else {
+        await setDoc(
+          doc(db, collection, id),
+          {
+            hasDeleteReq: true,
+            editUser: this.loggedUser?.name || this.loggedUser?.id,
+          },
+          { merge: true }
+        );
+      }
     } catch (error) {
       console.error("error when delete item:", error);
       throw error;
@@ -138,13 +153,32 @@ class actionStore {
   }
 
   async deleteMultipleDocs(ids: string[], callback?: () => void) {
-    try {
-      const deletePromises = ids.map((id) => {
-        const docRef = doc(db, "data", id);
-        return deleteDoc(docRef);
-      });
+    console.log("delete", this.loggedUser);
 
-      await Promise.all(deletePromises);
+    try {
+      if (this.loggedUser?.role !== "user") {
+        console.log("delete admin", ids);
+
+        const deletePromises = ids.map((id) => {
+          const docRef = doc(db, "data", id);
+          return deleteDoc(docRef);
+        });
+        await Promise.all(deletePromises);
+      } else {
+        const dataCollection = collection(db, "data");
+        console.log("deletMultipleDocs", ids);
+
+        const updatePromises = ids.map(async (id) => {
+          if (id) {
+            const itemRef = doc(dataCollection, id.toString());
+            await updateDoc(itemRef, {
+              hasDeleteReq: true,
+              editUser: this.loggedUser?.name || this.loggedUser?.id,
+            });
+          }
+        });
+        await Promise.all(updatePromises);
+      }
       callback?.();
       console.log("delete selected data!");
     } catch (error) {

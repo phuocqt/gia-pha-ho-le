@@ -90,6 +90,7 @@ export function deleteNode(
       const spousesNode = allNodeToObject[spouseNodeId];
       editData("data", spouseNodeId, {
         spouses: spousesNode?.spouses?.filter((item) => item?.id !== node?.id),
+        hasDeleteReq: true,
       });
     }
     if (node?.children?.length > 0) {
@@ -97,6 +98,7 @@ export function deleteNode(
         const childNode = allNodeToObject[child.id];
         editData("data", child.id, {
           parents: childNode?.parents?.filter((item) => item?.id !== node?.id),
+          hasDeleteReq: true,
         });
       });
     }
@@ -111,6 +113,7 @@ export function deleteNode(
       if (childrenList?.length > 0) {
         editData("data", parent.id, {
           children: childrenList.filter((child) => child.id !== node?.id),
+          hasDeleteReq: true,
         });
       }
     });

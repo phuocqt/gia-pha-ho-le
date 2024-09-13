@@ -102,7 +102,6 @@ export function ProfileDialog({
         editData("data", node?.id || "", {
           userId: "",
           photoURL: "",
-          editUser: loggedInUser?.uid,
         });
         setData({ ...data, photoURL: "", userId: "" });
       };
@@ -119,14 +118,11 @@ export function ProfileDialog({
           editData("data", itsMeData?.[0]?.id, {
             userId: "",
             photoURL: "",
-            editUser: loggedInUser?.uid,
           });
         }
-
         editData("data", node?.id || "", {
           userId: loggedInUser?.uid,
           photoURL: loggedInUser?.photoURL,
-          editUser: loggedInUser?.uid,
         });
         setData({
           ...data,
@@ -172,20 +168,17 @@ export function ProfileDialog({
       const tempData = {
         ...data,
         id: newId,
-        createUser: loggedInUser?.uid,
         parents: otherParent?.id
           ? [{ id: node?.id || "", type: "blood" }, otherParent]
           : [{ id: node?.id || "", type: "blood" }],
       };
       const parentData = {
-        editUser: loggedInUser?.uid,
         children: [
           ...(node?.children || []),
           { id: newId, type: data?.childType },
         ],
       };
       const otherParentData = {
-        editUser: loggedInUser?.uid,
         children: [{ id: newId, type: data?.childType }],
       };
 
@@ -279,7 +272,20 @@ export function ProfileDialog({
       <DialogContent className="sm:max-w-[425px] p-0 bg-[#fafafa] text-black border-none max-h-full overflow-auto">
         {mode === "view" && (
           <div>
-            <div className=" flex flex-col justify-center bg-[#a15e1f]  text-white items-center gap-1 mb-3">
+            <div className="pt-2 flex flex-col justify-center bg-[#a15e1f]  text-white items-center gap-1 mb-3">
+              {node?.hasAddReq ||
+                node?.hasDeleteReq ||
+                (node?.hasEditReq && (
+                  <div className="bg-blue-200 py-1 px-2 rounded-lg text-sm">
+                    {node?.hasAddReq
+                      ? "Đã được thêm mới, đang đợi xét duyệt yêu cầu"
+                      : node?.hasDeleteReq
+                      ? "Đã có yêu cầu xoá, đang đợi được xét duyệt"
+                      : node?.hasEditReq
+                      ? "đã có yêu cầu chỉnh sửa, đang đợi xét duyệt"
+                      : ""}
+                  </div>
+                ))}
               <Avatar
                 className={`${
                   node?.gender === "male"
@@ -292,6 +298,7 @@ export function ProfileDialog({
                   alt={node?.name}
                 />
               </Avatar>
+
               <div className="text-[20px] font-bold">{node?.name}</div>
               {(node?.birthday || node?.deathday) && (
                 <div className="text-[16px]">
@@ -308,7 +315,7 @@ export function ProfileDialog({
                   setMode("edit");
                   setData({ ...(node as any) });
                 }}
-                disabled={node?.hasEditingReq || node?.hasDeletingReq}
+                disabled={node?.hasEditReq || node?.hasDeleteReq}
               >
                 Chỉnh sửa
               </AuthButton>
@@ -322,7 +329,7 @@ export function ProfileDialog({
                       }}
                       variant="default"
                       className="w-[70px] mb-2 "
-                      disabled={node?.hasEditingReq || node?.hasDeletingReq}
+                      disabled={node?.hasEditReq || node?.hasDeleteReq}
                     >
                       Xoá
                     </Button>
@@ -334,7 +341,7 @@ export function ProfileDialog({
                         <Button
                           className="w-[120px] mb-2 "
                           variant="default"
-                          disabled={node?.hasEditingReq || node?.hasDeletingReq}
+                          disabled={node?.hasEditReq || node?.hasDeleteReq}
                         >
                           Thêm thành viên
                         </Button>
@@ -346,7 +353,7 @@ export function ProfileDialog({
                             setMode("addSpouses");
                             setData(initSpouse as any);
                           }}
-                          disabled={node?.hasEditingReq || node?.hasDeletingReq}
+                          disabled={node?.hasEditReq || node?.hasDeleteReq}
                         >
                           Thêm {`${node?.gender === "male" ? "Vợ" : "Chồng"}`}
                         </DropdownMenuItem>
@@ -356,7 +363,7 @@ export function ProfileDialog({
                             setMode("addChild");
                             setData(initChild);
                           }}
-                          disabled={node?.hasEditingReq || node?.hasDeletingReq}
+                          disabled={node?.hasEditReq || node?.hasDeleteReq}
                         >
                           Thêm Con
                         </DropdownMenuItem>
@@ -369,7 +376,7 @@ export function ProfileDialog({
                       }}
                       variant="default"
                       className="w-[70px] mb-2 "
-                      disabled={node?.hasEditingReq || node?.hasDeletingReq}
+                      disabled={node?.hasEditReq || node?.hasDeleteReq}
                     >
                       Xoá
                     </Button>

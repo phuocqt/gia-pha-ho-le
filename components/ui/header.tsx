@@ -58,7 +58,7 @@ export default function Header() {
           id: loggedInUser?.uid,
           email: loggedInUser?.email || "",
           name: loggedInUser?.displayName || "",
-          role: user?.role,
+          role: user?.role || "user",
         });
         if (
           window.location.pathname === "/user" &&
