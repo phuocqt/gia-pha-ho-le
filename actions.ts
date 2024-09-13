@@ -1,191 +1,248 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   collection,
-  deleteDoc,
-  doc,
-  DocumentData,
-  getDoc,
-  getDocs,
   query,
-  QuerySnapshot,
+  getDocs,
   setDoc,
+  doc,
+  getDoc,
   where,
+  deleteDoc,
+  QuerySnapshot,
+  DocumentData,
 } from "firebase/firestore";
 import { db } from "./config/firebase";
-import { NodeItem } from "./type";
+import { NodeItem, User } from "./type";
 
-export const generateQueryGetData = (collectionName: string) =>
-  query(collection(db, collectionName));
+class actionStore {
+  private loggedUser?: User | null = null;
 
-export const transformData = (
-  snapshot: QuerySnapshot<DocumentData, DocumentData>
-) =>
-  snapshot.docs.map((item) => ({
-    id: item?.id,
-    ...item?.data(),
-  }));
+  constructor() {}
 
-export async function getAllData(collectionName: string) {
-  const queryData = generateQueryGetData(collectionName);
-  try {
-    const dataSnapShot = await getDocs(queryData);
-    const data = transformData(dataSnapShot);
-    return data;
-  } catch (error) {
-    console.log("error", error);
+  generateQueryGetData(collectionName: string) {
+    return query(collection(db, collectionName));
+  }
+
+  transformData(snapshot: QuerySnapshot<DocumentData, DocumentData>) {
+    return snapshot.docs.map((item) => ({
+      id: item?.id,
+      ...item?.data(),
+    }));
+  }
+
+  syncUser(user: User) {
+    if (user) this.loggedUser = user;
+  }
+
+  async getAllData(collectionName: string) {
+    const queryData = this.generateQueryGetData(collectionName);
+    try {
+      const dataSnapShot = await getDocs(queryData);
+      const data = this.transformData(dataSnapShot);
+      return data;
+    } catch (error) {
+      console.log("error", error);
+    }
+  }
+
+  async addData(data: NodeItem, callback: (type: "error" | "success") => void) {
+    console.log("add Data", data);
+    try {
+      await setDoc(doc(db, "data", data.id), {
+        ...data,
+      });
+      callback("success");
+    } catch (error) {
+      console.log("ERROR", error);
+      callback("error");
+    }
+  }
+
+  async editData(
+    collection: string,
+    id: string,
+    data: any,
+    callback?: (type: "error" | "success") => void
+  ) {
+    try {
+      console.log("edit data", data);
+
+      await setDoc(
+        doc(db, collection, id),
+        {
+          ...data,
+        },
+        { merge: true }
+      );
+      callback?.("success");
+    } catch (error) {
+      callback?.("error");
+      console.log("ERROR", error);
+    }
+  }
+
+  async getDataById(collection: string, id: string) {
+    try {
+      const docRef = doc(db, collection, id);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        return docSnap.data();
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.error("ERROR:", error);
+      throw error;
+    }
+  }
+
+  async getDataByField(fieldName: string, fieldValue: any) {
+    try {
+      const dataCollection = collection(db, "data");
+      const q = query(dataCollection, where(fieldName, "==", fieldValue));
+      const querySnapshot = await getDocs(q);
+
+      const result: any[] = [];
+      querySnapshot.forEach((doc) => {
+        result.push({ id: doc.id, ...doc.data() });
+      });
+
+      if (result.length > 0) {
+        console.log("found data:", result);
+        return result;
+      } else {
+        console.log("data not found");
+        return [];
+      }
+    } catch (error) {
+      console.error("ERROR:", error);
+      throw error;
+    }
+  }
+
+  async deleteItem(
+    collection: string,
+    id: string,
+    callback?: () => void
+  ): Promise<void> {
+    try {
+      const docRef = doc(db, collection, id);
+      await deleteDoc(docRef);
+      console.log(`delete success ${id} from collection ${collection}`);
+      callback?.();
+    } catch (error) {
+      console.error("error when delete item:", error);
+      throw error;
+    }
+  }
+
+  async deleteMultipleDocs(ids: string[], callback?: () => void) {
+    try {
+      const deletePromises = ids.map((id) => {
+        const docRef = doc(db, "data", id);
+        return deleteDoc(docRef);
+      });
+
+      await Promise.all(deletePromises);
+      callback?.();
+      console.log("delete selected data!");
+    } catch (error) {
+      console.error("error when delete data:", error);
+      throw error;
+    }
+  }
+
+  async deleteAllDataFromFirestore() {
+    try {
+      const dataCollection = collection(db, "data");
+      const querySnapshot = await getDocs(dataCollection);
+
+      const deletePromises = querySnapshot.docs.map((document) => {
+        return deleteDoc(doc(db, "data", document.id));
+      });
+
+      await Promise.all(deletePromises);
+      console.log("all data in collection was deleted.");
+    } catch (error) {
+      console.error("error when delete all data:", error);
+    }
+  }
+
+  async runFakeData(dataArray: NodeItem[]) {
+    try {
+      await this.deleteAllDataFromFirestore();
+      const dataCollection = collection(db, "data");
+
+      const savePromises = dataArray.map(async (item) => {
+        if (item.id) {
+          const itemRef = doc(dataCollection, item.id.toString());
+          await setDoc(itemRef, item);
+        }
+      });
+
+      await Promise.all(savePromises);
+      console.log("All fake data was added!");
+    } catch (error) {
+      console.error("error when saving fake data to Firestore:", error);
+    }
   }
 }
 
-export const addData = async (
+// Export the class for use with 'new'
+export default actionStore;
+
+// Export standalone functions that use actionStore internally
+let actionStoreInstance: actionStore | null = null;
+
+function actions() {
+  if (!actionStoreInstance) {
+    actionStoreInstance = new actionStore();
+  }
+  return actionStoreInstance;
+}
+
+export const syncUser = (user: User) => actions().syncUser(user);
+
+export const generateQueryGetData = (collectionName: string) =>
+  actions().generateQueryGetData(collectionName);
+
+export const transformData = (
+  snapshot: QuerySnapshot<DocumentData, DocumentData>
+) => actions().transformData(snapshot);
+
+export const getAllData = (collectionName: string) =>
+  actions().getAllData(collectionName);
+
+export const addData = (
   data: NodeItem,
   callback: (type: "error" | "success") => void
-) => {
-  console.log("add Data", data);
+) => actions().addData(data, callback);
 
-  try {
-    await setDoc(doc(db, "data", data.id), {
-      ...data,
-    });
-    callback("success");
-  } catch (error) {
-    console.log("ERROR", error);
-    callback("error");
-  }
-};
-
-export const editData = async (
+export const editData = (
   collection: string,
   id: string,
   data: any,
   callback?: (type: "error" | "success") => void
-) => {
-  try {
-    console.log("edit data", data);
+) => actions().editData(collection, id, data, callback);
 
-    await setDoc(
-      doc(db, collection, id),
-      {
-        ...data,
-      },
-      { merge: true } // just update what is changed
-    );
-    callback?.("success");
-  } catch (error) {
-    callback?.("error");
-    console.log("ERROR", error);
-  }
-};
+export const getDataById = (collection: string, id: string) =>
+  actions().getDataById(collection, id);
 
-export async function getDataById(collection: string, id: string) {
-  try {
-    const docRef = doc(db, collection, id);
+export const getDataByField = (fieldName: string, fieldValue: any) =>
+  actions().getDataByField(fieldName, fieldValue);
 
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-      return docSnap.data();
-    } else {
-      return null;
-    }
-  } catch (error) {
-    console.error("ERROR:", error);
-    throw error;
-  }
-}
-
-export async function getDataByField(fieldName: string, fieldValue: any) {
-  try {
-    const dataCollection = collection(db, "data");
-
-    const q = query(dataCollection, where(fieldName, "==", fieldValue));
-
-    const querySnapshot = await getDocs(q);
-
-    const result: any[] = [];
-    querySnapshot.forEach((doc) => {
-      result.push({ id: doc.id, ...doc.data() });
-    });
-
-    if (result.length > 0) {
-      console.log("found data:", result);
-      return result;
-    } else {
-      console.log("data not found");
-      return [];
-    }
-  } catch (error) {
-    console.error("ERROR:", error);
-    throw error;
-  }
-}
-
-export async function deleteItem(
+export const deleteItem = (
   collection: string,
   id: string,
   callback?: () => void
-): Promise<void> {
-  try {
-    const docRef = doc(db, collection, id);
+) => actions().deleteItem(collection, id, callback);
 
-    await deleteDoc(docRef);
+export const deleteMultipleDocs = (ids: string[], callback?: () => void) =>
+  actions().deleteMultipleDocs(ids, callback);
 
-    console.log(`delete success ${id} from collection ${collection}`);
-    callback?.();
-  } catch (error) {
-    console.error("error when delete item:", error);
-    throw error;
-  }
-}
+export const deleteAllDataFromFirestore = () =>
+  actions().deleteAllDataFromFirestore();
 
-export async function deleteMultipleDocs(ids: string[], callback?: () => void) {
-  try {
-    const deletePromises = ids.map((id) => {
-      const docRef = doc(db, "data", id);
-      return deleteDoc(docRef);
-    });
-
-    await Promise.all(deletePromises);
-
-    callback?.();
-    console.log("delete selected data!");
-  } catch (error) {
-    console.error("error when delete data:", error);
-    throw error;
-  }
-}
-
-const deleteAllDataFromFirestore = async () => {
-  try {
-    const dataCollection = collection(db, "data");
-    const querySnapshot = await getDocs(dataCollection);
-
-    const deletePromises = querySnapshot.docs.map((document) => {
-      return deleteDoc(doc(db, "data", document.id));
-    });
-
-    await Promise.all(deletePromises);
-    console.log("all data in collection was deleted.");
-  } catch (error) {
-    console.error("error when delete all data:", error);
-  }
-};
-
-export const runFakeData = async (dataArray: NodeItem[]) => {
-  try {
-    // delete all data
-    await deleteAllDataFromFirestore();
-    const dataCollection = collection(db, "data");
-    // create new data
-    const savePromises = dataArray.map(async (item) => {
-      if (item.id) {
-        const itemRef = doc(dataCollection, item.id.toString());
-        await setDoc(itemRef, item);
-      }
-    });
-
-    await Promise.all(savePromises);
-    console.log("All fake data was added!");
-  } catch (error) {
-    console.error("error when saving fake data to Firestore:", error);
-  }
-};
+export const runFakeData = (dataArray: NodeItem[]) =>
+  actions().runFakeData(dataArray);

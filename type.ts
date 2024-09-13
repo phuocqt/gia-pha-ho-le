@@ -18,6 +18,9 @@ export interface NodeItem extends ExtNode {
   photoURL?: string;
   userId?: string;
   isRoot?: boolean;
+  hasEditingReq?: boolean;
+  hasDeletingReq?: boolean;
+  hasAddReq?: boolean;
 }
 
 export interface NavItem {

@@ -17,7 +17,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { getDataById } from "@/actions";
+import { getDataById, syncUser } from "@/actions";
 import { useRouter } from "next/navigation";
 
 export default function Header() {
@@ -54,6 +54,12 @@ export default function Header() {
         );
         const user = await getDataById("users", loggedInUser?.uid || "");
         setUserRole(user?.role);
+        syncUser({
+          id: loggedInUser?.uid,
+          email: loggedInUser?.email || "",
+          name: loggedInUser?.displayName || "",
+          role: user?.role,
+        });
         if (
           window.location.pathname === "/user" &&
           user?.role !== "supperAdmin"

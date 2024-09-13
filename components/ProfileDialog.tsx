@@ -24,7 +24,6 @@ import {
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/config/firebase";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
-import { addData, editData, getDataByField } from "@/actions";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -39,6 +38,7 @@ import avatarIcon from "../assets/avatar.jpg";
 import { Alert } from "./ui/alert";
 import ValidatedYearInput from "./ui/validateYearInput";
 import { deleteNode } from "@/utils";
+import { addData, editData, getDataByField } from "@/actions";
 
 export function ProfileDialog({
   open,
@@ -58,7 +58,6 @@ export function ProfileDialog({
     spouses: node?.spouses || [],
     parents: node?.parents || [],
   });
-
   const [loggedInUser] = useAuthState(auth);
   const [mode, setMode] = useState<"view" | "edit" | "addSpouses" | "addChild">(
     "view"
@@ -309,6 +308,7 @@ export function ProfileDialog({
                   setMode("edit");
                   setData({ ...(node as any) });
                 }}
+                disabled={node?.hasEditingReq || node?.hasDeletingReq}
               >
                 Chỉnh sửa
               </AuthButton>
@@ -322,6 +322,7 @@ export function ProfileDialog({
                       }}
                       variant="default"
                       className="w-[70px] mb-2 "
+                      disabled={node?.hasEditingReq || node?.hasDeletingReq}
                     >
                       Xoá
                     </Button>
@@ -330,7 +331,11 @@ export function ProfileDialog({
                   <>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button className="w-[120px] mb-2 " variant="default">
+                        <Button
+                          className="w-[120px] mb-2 "
+                          variant="default"
+                          disabled={node?.hasEditingReq || node?.hasDeletingReq}
+                        >
                           Thêm thành viên
                         </Button>
                       </DropdownMenuTrigger>
@@ -341,6 +346,7 @@ export function ProfileDialog({
                             setMode("addSpouses");
                             setData(initSpouse as any);
                           }}
+                          disabled={node?.hasEditingReq || node?.hasDeletingReq}
                         >
                           Thêm {`${node?.gender === "male" ? "Vợ" : "Chồng"}`}
                         </DropdownMenuItem>
@@ -350,6 +356,7 @@ export function ProfileDialog({
                             setMode("addChild");
                             setData(initChild);
                           }}
+                          disabled={node?.hasEditingReq || node?.hasDeletingReq}
                         >
                           Thêm Con
                         </DropdownMenuItem>
@@ -362,6 +369,7 @@ export function ProfileDialog({
                       }}
                       variant="default"
                       className="w-[70px] mb-2 "
+                      disabled={node?.hasEditingReq || node?.hasDeletingReq}
                     >
                       Xoá
                     </Button>
