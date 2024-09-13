@@ -3,7 +3,7 @@ import type { ExtNode } from "relatives-tree/lib/types";
 import { NODE_HEIGHT, NODE_WIDTH } from "./constants/const";
 import { Timestamp } from "firebase/firestore";
 import { NodeItem } from "./type";
-import { deleteItem, editData } from "./actions";
+import { deleteItem, deleteMultipleDocs, editData } from "./actions";
 
 export function getNodeStyle({ left, top }: Readonly<ExtNode>): CSSProperties {
   return {
@@ -57,12 +57,17 @@ export function convertData(nodes: NodeItem[]): NodeItem[] {
   return (convertedData as NodeItem[]) || [];
 }
 
-export function deleteNode(allNode: NodeItem[], node: NodeItem) {
+export function deleteNode(
+  allNode: NodeItem[],
+  node: NodeItem,
+  callback?: () => void
+) {
   const allNodeToObject: Record<string, NodeItem> = {};
   allNode?.forEach((node) => {
     if (node?.id) allNodeToObject[node?.id] = node;
   });
-  const relatedIds: string[] = [];
+  const relatedIds: string[] = [node?.id];
+
   const getRelateNode = (node: NodeItem) => {
     if (node?.spouses) {
       node?.spouses?.forEach((spouse) => {
@@ -77,27 +82,40 @@ export function deleteNode(allNode: NodeItem[], node: NodeItem) {
           getRelateNode(allNodeToObject[child.id]);
       });
   };
-  getRelateNode(node);
-  console.log("child", relatedIds);
 
   const isLeader = node?.parents?.length > 0;
   if (!isLeader) {
-    deleteItem("data", node?.id);
+    const spouseNodeId = node?.spouses.length && node?.spouses?.[0]?.id;
+    if (spouseNodeId) {
+      const spousesNode = allNodeToObject[spouseNodeId];
+      editData("data", spouseNodeId, {
+        spouses: spousesNode?.spouses?.filter((item) => item?.id !== node?.id),
+      });
+    }
+    if (node?.children?.length > 0) {
+      node?.children?.forEach((child) => {
+        const childNode = allNodeToObject[child.id];
+        editData("data", child.id, {
+          parents: childNode?.parents?.filter((item) => item?.id !== node?.id),
+        });
+      });
+    }
+    deleteItem("data", node?.id, () => callback?.());
   }
   if (isLeader) {
-    // delete child from parent
+    getRelateNode(node);
+    // change parent data (delete child with delete id)
     node?.parents?.forEach((parent) => {
       const parentData = allNodeToObject[parent.id];
       const childrenList = [...parentData?.children];
       if (childrenList?.length > 0) {
-        const childIndex = childrenList?.findIndex(
-          (child) => child?.id === node?.id
-        );
-        if (childIndex > -1) {
-          childrenList.splice(childIndex, 1);
-        }
-        // editData("data", parent.id, { children: childrenList });
+        editData("data", parent.id, {
+          children: childrenList.filter((child) => child.id !== node?.id),
+        });
       }
     });
+    deleteMultipleDocs(relatedIds, () => callback?.());
   }
+
+  console.log("related", relatedIds);
 }

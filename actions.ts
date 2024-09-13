@@ -40,6 +40,8 @@ export const addData = async (
   data: NodeItem,
   callback: (type: "error" | "success") => void
 ) => {
+  console.log("add Data", data);
+
   try {
     await setDoc(doc(db, "data", data.id), {
       ...data,
@@ -58,6 +60,8 @@ export const editData = async (
   callback?: (type: "error" | "success") => void
 ) => {
   try {
+    console.log("edit data", data);
+
     await setDoc(
       doc(db, collection, id),
       {
@@ -103,10 +107,10 @@ export async function getDataByField(fieldName: string, fieldValue: any) {
     });
 
     if (result.length > 0) {
-      console.log("Dữ liệu tìm thấy:", result);
+      console.log("found data:", result);
       return result;
     } else {
-      console.log("Không tìm thấy tài liệu phù hợp!");
+      console.log("data not found");
       return [];
     }
   } catch (error) {
@@ -117,7 +121,8 @@ export async function getDataByField(fieldName: string, fieldValue: any) {
 
 export async function deleteItem(
   collection: string,
-  id: string
+  id: string,
+  callback?: () => void
 ): Promise<void> {
   try {
     const docRef = doc(db, collection, id);
@@ -125,13 +130,14 @@ export async function deleteItem(
     await deleteDoc(docRef);
 
     console.log(`delete success ${id} from collection ${collection}`);
+    callback?.();
   } catch (error) {
-    console.error("Lỗi khi xóa item:", error);
+    console.error("error when delete item:", error);
     throw error;
   }
 }
 
-export async function deleteMultipleDocs(ids: string[]) {
+export async function deleteMultipleDocs(ids: string[], callback?: () => void) {
   try {
     const deletePromises = ids.map((id) => {
       const docRef = doc(db, "data", id);
@@ -140,9 +146,46 @@ export async function deleteMultipleDocs(ids: string[]) {
 
     await Promise.all(deletePromises);
 
-    console.log("Đã xóa các tài liệu thành công!");
+    callback?.();
+    console.log("delete selected data!");
   } catch (error) {
-    console.error("Lỗi khi xóa tài liệu:", error);
+    console.error("error when delete data:", error);
     throw error;
   }
 }
+
+const deleteAllDataFromFirestore = async () => {
+  try {
+    const dataCollection = collection(db, "data");
+    const querySnapshot = await getDocs(dataCollection);
+
+    const deletePromises = querySnapshot.docs.map((document) => {
+      return deleteDoc(doc(db, "data", document.id));
+    });
+
+    await Promise.all(deletePromises);
+    console.log("all data in collection was deleted.");
+  } catch (error) {
+    console.error("error when delete all data:", error);
+  }
+};
+
+export const runFakeData = async (dataArray: NodeItem[]) => {
+  try {
+    // delete all data
+    await deleteAllDataFromFirestore();
+    const dataCollection = collection(db, "data");
+    // create new data
+    const savePromises = dataArray.map(async (item) => {
+      if (item.id) {
+        const itemRef = doc(dataCollection, item.id.toString());
+        await setDoc(itemRef, item);
+      }
+    });
+
+    await Promise.all(savePromises);
+    console.log("All fake data was added!");
+  } catch (error) {
+    console.error("error when saving fake data to Firestore:", error);
+  }
+};

@@ -17,6 +17,7 @@ export interface NodeItem extends ExtNode {
   otherParentId?: string;
   photoURL?: string;
   userId?: string;
+  isRoot?: boolean;
 }
 
 export interface NavItem {

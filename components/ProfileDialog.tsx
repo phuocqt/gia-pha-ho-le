@@ -24,7 +24,7 @@ import {
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/config/firebase";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
-import { addData, deleteItem, editData, getDataByField } from "@/actions";
+import { addData, editData, getDataByField } from "@/actions";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -73,11 +73,14 @@ export function ProfileDialog({
 
   const { toast } = useToast();
   useEffect(() => {
-    if (!!node) setMode("view");
+    if (!!node) {
+      setData({ ...node });
+      setMode("view");
+    }
   }, [node, open]);
 
   const isLeader = !!node?.parents?.length;
-  const isRootNode = allNode?.length === 1;
+  const isRootNode = node?.isRoot;
   const isMultiMarried = (node?.spouses?.length || 0) > 1;
   const spousesNode = (node?.spouses || []).map((item) => {
     const itemDetail = allNode?.find((i) => i.id === item.id);
@@ -175,12 +178,16 @@ export function ProfileDialog({
           ? [{ id: node?.id || "", type: "blood" }, otherParent]
           : [{ id: node?.id || "", type: "blood" }],
       };
-      const childData = {
+      const parentData = {
         editUser: loggedInUser?.uid,
         children: [
           ...(node?.children || []),
           { id: newId, type: data?.childType },
         ],
+      };
+      const otherParentData = {
+        editUser: loggedInUser?.uid,
+        children: [{ id: newId, type: data?.childType }],
       };
 
       addData(tempData as NodeItem, (type) => {
@@ -195,8 +202,8 @@ export function ProfileDialog({
         onClose?.("success");
       });
       // update parent
-      editData("data", node?.id || "", childData);
-      editData("data", otherParent?.id || "", childData);
+      editData("data", node?.id || "", parentData);
+      editData("data", otherParent?.id || "", otherParentData);
 
       // update siblings
       if (node?.children && node?.children.length > 0) {
@@ -216,6 +223,11 @@ export function ProfileDialog({
       const tempData = {
         ...data,
         id: newId,
+        children: [
+          ...(node?.spouses?.length && node?.spouses?.length > 0
+            ? []
+            : node?.children || []),
+        ],
       };
       const nodeData = {
         ...node,
@@ -252,7 +264,7 @@ export function ProfileDialog({
     childType: "blood",
     isAlive: true,
     siblings: [],
-    children: [...(node?.children || [])],
+    children: [],
     spouses: [{ id: node?.id, type: "married" }],
     parents: [],
   };
@@ -301,21 +313,12 @@ export function ProfileDialog({
                 Chỉnh sửa
               </AuthButton>
               {loggedInUser ? (
-                !isLeader || isRootNode ? (
+                !isLeader && !isRootNode ? (
                   <>
                     <Button
                       onClick={() => {
-                        setMode("addChild");
-                        setData(initChild);
-                      }}
-                      variant="default"
-                      className="w-[100px] mb-2 "
-                    >
-                      Thêm Con
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        if (allNode && node) deleteNode(allNode, node);
+                        if (allNode && node)
+                          deleteNode(allNode, node, () => onClose?.("success"));
                       }}
                       variant="default"
                       className="w-[70px] mb-2 "
@@ -354,7 +357,8 @@ export function ProfileDialog({
                     </DropdownMenu>
                     <Button
                       onClick={() => {
-                        if (allNode && node) deleteNode(allNode, node);
+                        if (allNode && node)
+                          deleteNode(allNode, node, () => onClose?.("success"));
                       }}
                       variant="default"
                       className="w-[70px] mb-2 "
@@ -543,7 +547,7 @@ export function ProfileDialog({
                       >
                         <RadioGroupItem value="adopted" id="r2" />
                         <Label className="w-[100px]" htmlFor="r2">
-                          Con Riêng
+                          Con Nuôi
                         </Label>
                       </div>
                     </RadioGroup>
