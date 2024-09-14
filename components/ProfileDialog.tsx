@@ -294,6 +294,7 @@ export function ProfileDialog({
       deleteItem("historyData", node?.id || "");
       setHistoryData(undefined);
       setMode("view");
+      onClose?.("success");
     }
     if (node?.hasAddReq && !!allNode) {
       deleteNode(allNode, node, () => onClose?.("success"));
