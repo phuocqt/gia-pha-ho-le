@@ -37,8 +37,17 @@ import {
 import avatarIcon from "../assets/avatar.jpg";
 import { Alert } from "./ui/alert";
 import ValidatedYearInput from "./ui/validateYearInput";
-import { deleteNode } from "@/utils";
-import { addData, editData, getDataByField } from "@/actions";
+import {
+  addData,
+  deleteItem,
+  deleteNode,
+  editData,
+  editNodeByUserRole,
+  getDataByField,
+  getDataById,
+  getUser,
+} from "@/actions";
+import { renderGender } from "@/utils";
 
 export function ProfileDialog({
   open,
@@ -58,10 +67,11 @@ export function ProfileDialog({
     spouses: node?.spouses || [],
     parents: node?.parents || [],
   });
+  const [historyData, setHistoryData] = useState<NodeItem>();
   const [loggedInUser] = useAuthState(auth);
-  const [mode, setMode] = useState<"view" | "edit" | "addSpouses" | "addChild">(
-    "view"
-  );
+  const [mode, setMode] = useState<
+    "view" | "edit" | "addSpouses" | "addChild" | "review"
+  >("view");
   const [openAlert, setOpenAlert] = useState<{
     messenger?: string;
     onConfirm?: () => void;
@@ -71,13 +81,24 @@ export function ProfileDialog({
   });
 
   const { toast } = useToast();
+
+  const getHistory = async () => {
+    const data = await getDataById("historyData", node?.id || "");
+    setHistoryData(data as unknown as NodeItem);
+  };
+  const handleEditingReview = () => {
+    getHistory();
+    setMode("review");
+  };
+
   useEffect(() => {
     if (!!node) {
       setData({ ...node });
+
       setMode("view");
     }
   }, [node, open]);
-
+  const userRole = getUser()?.role || "user";
   const isLeader = !!node?.parents?.length;
   const isRootNode = node?.isRoot;
   const isMultiMarried = (node?.spouses?.length || 0) > 1;
@@ -141,8 +162,7 @@ export function ProfileDialog({
 
   const onSubmit = () => {
     if (mode === "edit") {
-      editData(
-        "data",
+      editNodeByUserRole(
         node?.id || "",
         { ...data, editUser: loggedInUser?.uid } as NodeItem,
         (type) => {
@@ -241,6 +261,57 @@ export function ProfileDialog({
     }
   };
 
+  const handleAccept = () => {
+    if (node?.hasDeleteReq) {
+      allNode && deleteNode(allNode, node, () => onClose?.("success"));
+      return;
+    }
+    if (node?.hasAddReq) {
+      editData("data", node?.id || "", {
+        hasAddReq: false,
+      });
+      setData({ ...data, hasAddReq: false });
+      setMode("view");
+    }
+    if (node?.hasEditReq) {
+      editData("data", node?.id || "", {
+        hasEditReq: false,
+      });
+      setData({ ...data, hasEditReq: false });
+
+      deleteItem("historyData", node?.id || "");
+      setHistoryData(undefined);
+      setMode("view");
+    }
+  };
+  const handleRestore = () => {
+    if (node?.hasDeleteReq) {
+      editData("data", node?.id || "", {
+        hasDeleteReq: false,
+        ...historyData,
+      });
+      setData({ ...data, hasDeleteReq: false });
+      deleteItem("historyData", node?.id || "");
+      setHistoryData(undefined);
+      setMode("view");
+    }
+    if (node?.hasAddReq && !!allNode) {
+      deleteNode(allNode, node, () => onClose?.("success"));
+      return;
+    }
+    if (node?.hasEditReq) {
+      editData("data", node?.id || "", {
+        hasEditReq: false,
+        ...historyData,
+      });
+      setData({ ...data, hasEditReq: false });
+      deleteItem("historyData", node?.id || "");
+      setHistoryData(undefined);
+      setMode("view");
+      onClose?.("success");
+    }
+  };
+
   const initChild = {
     otherParentId: node?.spouses?.[0]?.id || "",
     gender: "male" as any,
@@ -270,22 +341,58 @@ export function ProfileDialog({
     >
       <DialogTitle></DialogTitle>
       <DialogContent className="sm:max-w-[425px] p-0 bg-[#fafafa] text-black border-none max-h-full overflow-auto">
-        {mode === "view" && (
+        {(mode === "view" || mode === "review") && (
           <div>
             <div className="pt-2 flex flex-col justify-center bg-[#a15e1f]  text-white items-center gap-1 mb-3">
-              {node?.hasAddReq ||
-                node?.hasDeleteReq ||
-                (node?.hasEditReq && (
-                  <div className="bg-blue-200 py-1 px-2 rounded-lg text-sm">
-                    {node?.hasAddReq
-                      ? "Đã được thêm mới, đang đợi xét duyệt yêu cầu"
-                      : node?.hasDeleteReq
-                      ? "Đã có yêu cầu xoá, đang đợi được xét duyệt"
-                      : node?.hasEditReq
-                      ? "đã có yêu cầu chỉnh sửa, đang đợi xét duyệt"
-                      : ""}
-                  </div>
-                ))}
+              {(data?.hasAddReq || data?.hasDeleteReq || data?.hasEditReq) && (
+                <>
+                  {userRole === "user" ? (
+                    <div className="bg-blue-200 py-1 px-2 rounded-lg text-sm">
+                      {data?.hasAddReq
+                        ? "Đã được thêm mới, đang đợi xét duyệt yêu cầu"
+                        : data?.hasDeleteReq
+                        ? "Đã có yêu cầu xoá, đang đợi được xét duyệt"
+                        : data?.hasEditReq
+                        ? "đã có yêu cầu chỉnh sửa, đang đợi xét duyệt"
+                        : ""}
+                    </div>
+                  ) : (
+                    <>
+                      {data?.hasAddReq && (
+                        <Button
+                          variant="secondary"
+                          disabled={mode === "review"}
+                          onClick={handleEditingReview}
+                        >
+                          {mode === "view"
+                            ? "Duyệt Thêm mới"
+                            : "Đang duyệt Thêm mới"}
+                        </Button>
+                      )}
+                      {data?.hasDeleteReq && (
+                        <Button
+                          disabled={mode === "review"}
+                          variant="destructive"
+                          onClick={handleEditingReview}
+                        >
+                          {mode === "view" ? "Duyệt xoá" : "Đang duyệt xoá"}
+                        </Button>
+                      )}
+                      {data?.hasEditReq && (
+                        <Button
+                          variant="secondary"
+                          onClick={handleEditingReview}
+                          disabled={mode === "review"}
+                        >
+                          {mode === "view"
+                            ? "Duyệt chỉnh sửa"
+                            : "Đang duyệt chỉnh sửa"}
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
               <Avatar
                 className={`${
                   node?.gender === "male"
@@ -307,92 +414,134 @@ export function ProfileDialog({
                 </div>
               )}
             </div>
-            <div className="flex gap-4 justify-center items-center">
-              <AuthButton
-                variant="default"
-                className="w-[100px] mb-2 "
-                onClick={() => {
-                  setMode("edit");
-                  setData({ ...(node as any) });
-                }}
-                disabled={node?.hasEditReq || node?.hasDeleteReq}
-              >
-                Chỉnh sửa
-              </AuthButton>
-              {loggedInUser ? (
-                !isLeader && !isRootNode ? (
-                  <>
-                    <Button
-                      onClick={() => {
-                        if (allNode && node)
-                          deleteNode(allNode, node, () => onClose?.("success"));
-                      }}
-                      variant="default"
-                      className="w-[70px] mb-2 "
-                      disabled={node?.hasEditReq || node?.hasDeleteReq}
-                    >
-                      Xoá
-                    </Button>
-                  </>
+            {mode === "view" && (
+              <div className="flex gap-4 justify-center items-center">
+                <AuthButton
+                  variant="default"
+                  className="w-[100px] mb-2 "
+                  onClick={() => {
+                    setMode("edit");
+                    setData({ ...(node as any) });
+                  }}
+                  disabled={node?.hasEditReq || node?.hasDeleteReq}
+                >
+                  Chỉnh sửa
+                </AuthButton>
+                {loggedInUser ? (
+                  !isLeader && !isRootNode ? (
+                    <>
+                      <Button
+                        onClick={() => {
+                          setOpenAlert({
+                            messenger:
+                              "Xoá người này có thể làm xoá dữ liệu của con cháu",
+                            onConfirm: () => {
+                              if (allNode && node)
+                                deleteNode(allNode, node, () => {
+                                  onClose?.("success");
+                                  setData({ ...data, hasDeleteReq: true });
+                                });
+                            },
+                          });
+                        }}
+                        variant="default"
+                        className="w-[70px] mb-2 "
+                        disabled={node?.hasEditReq || node?.hasDeleteReq}
+                      >
+                        Xoá
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            className="w-[120px] mb-2 "
+                            variant="default"
+                            disabled={node?.hasEditReq || node?.hasDeleteReq}
+                          >
+                            Thêm thành viên
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setMode("addSpouses");
+                              setData(initSpouse as any);
+                            }}
+                            disabled={node?.hasEditReq || node?.hasDeleteReq}
+                          >
+                            Thêm {`${node?.gender === "male" ? "Vợ" : "Chồng"}`}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setMode("addChild");
+                              setData(initChild);
+                            }}
+                            disabled={node?.hasEditReq || node?.hasDeleteReq}
+                          >
+                            Thêm Con
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <Button
+                        onClick={() => {
+                          setOpenAlert({
+                            messenger:
+                              "Xoá người này có thể làm xoá dữ liệu của con cháu",
+                            onConfirm: () => {
+                              if (allNode && node)
+                                deleteNode(allNode, node, () => {
+                                  onClose?.("success");
+                                  setData({ ...data, hasDeleteReq: true });
+                                });
+                            },
+                          });
+                        }}
+                        variant="default"
+                        className="w-[70px] mb-2 "
+                        disabled={node?.hasEditReq || node?.hasDeleteReq}
+                      >
+                        Xoá
+                      </Button>
+                    </>
+                  )
                 ) : (
                   <>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          className="w-[120px] mb-2 "
-                          variant="default"
-                          disabled={node?.hasEditReq || node?.hasDeleteReq}
-                        >
-                          Thêm thành viên
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setMode("addSpouses");
-                            setData(initSpouse as any);
-                          }}
-                          disabled={node?.hasEditReq || node?.hasDeleteReq}
-                        >
-                          Thêm {`${node?.gender === "male" ? "Vợ" : "Chồng"}`}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setMode("addChild");
-                            setData(initChild);
-                          }}
-                          disabled={node?.hasEditReq || node?.hasDeleteReq}
-                        >
-                          Thêm Con
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    <Button
-                      onClick={() => {
-                        if (allNode && node)
-                          deleteNode(allNode, node, () => onClose?.("success"));
-                      }}
-                      variant="default"
-                      className="w-[70px] mb-2 "
-                      disabled={node?.hasEditReq || node?.hasDeleteReq}
-                    >
+                    <AuthButton variant="default" className="w-[150px] mb-2  ">
+                      Thêm Thành viên
+                    </AuthButton>
+                    <AuthButton variant="default" className="w-[150px] mb-2  ">
                       Xoá
-                    </Button>
+                    </AuthButton>
                   </>
-                )
-              ) : (
-                <>
-                  <AuthButton variant="default" className="w-[150px] mb-2  ">
-                    Thêm Thành viên
-                  </AuthButton>
-                  <AuthButton variant="default" className="w-[150px] mb-2  ">
-                    Xoá
-                  </AuthButton>
-                </>
-              )}
-            </div>
+                )}
+              </div>
+            )}
+            {mode === "review" && (
+              <div className="flex gap-4 justify-center items-center">
+                <Button
+                  onClick={() => {
+                    handleAccept();
+                  }}
+                  variant="destructive"
+                  className="w-[70px] mb-2 "
+                >
+                  Đồng ý
+                </Button>
+                <Button
+                  onClick={() => {
+                    handleRestore();
+                  }}
+                  variant="destructive"
+                  className="w-[70px] mb-2 "
+                >
+                  Restore
+                </Button>
+              </div>
+            )}
             <div className="px-4 py-5 text-[16px]">
               <div className="flex items-center">
                 <Label
@@ -401,7 +550,22 @@ export function ProfileDialog({
                 >
                   Tên:
                 </Label>
-                <div className="">{node?.name}</div>
+                {(mode == "view" ||
+                  (mode === "review" && !node?.hasEditReq)) && (
+                  <div className="">{node?.name}</div>
+                )}
+                {mode == "review" && node?.hasEditReq && (
+                  <div className="flex gap-1 justify-start">
+                    {historyData?.name === node?.name ? (
+                      <span>{node?.name || "-"}</span>
+                    ) : (
+                      <>
+                        <span className="pr-2">{historyData?.name || "-"}</span>
+                        <span className="bg-orange-400">{node?.name}</span>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="flex items-center ">
                 <Label
@@ -410,13 +574,26 @@ export function ProfileDialog({
                 >
                   Giới tính:
                 </Label>
-                <div className="">
-                  {node?.gender
-                    ? node?.gender === "male"
-                      ? "Nam"
-                      : "Nữ"
-                    : "-"}
-                </div>
+                {(mode == "view" ||
+                  (mode === "review" && !node?.hasEditReq)) && (
+                  <div className="">{renderGender(node?.gender)}</div>
+                )}
+                {mode == "review" && node?.hasEditReq && (
+                  <div className="">
+                    {historyData?.gender === node?.gender ? (
+                      <span>{renderGender(node?.gender)}</span>
+                    ) : (
+                      <>
+                        <span className="pr-2">
+                          {renderGender(historyData?.gender)}
+                        </span>
+                        <span className="bg-orange-400">
+                          {renderGender(node?.gender)}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="flex items-center ">
                 <Label
@@ -425,7 +602,24 @@ export function ProfileDialog({
                 >
                   Năm sinh:
                 </Label>
-                <div className="">{node?.birthday || "-"}</div>
+                {(mode == "view" ||
+                  (mode === "review" && !node?.hasEditReq)) && (
+                  <div className="">{node?.birthday}</div>
+                )}
+                {mode == "review" && node?.hasEditReq && (
+                  <div className="flex gap-1 justify-start">
+                    {historyData?.birthday === node?.birthday ? (
+                      <span>{node?.birthday || "-"}</span>
+                    ) : (
+                      <>
+                        <span className="pr-2">
+                          {historyData?.birthday || "-"}
+                        </span>
+                        <span className="bg-orange-400">{node?.birthday}</span>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
               {node?.isAlive && (
                 <div className="flex items-center ">
@@ -435,7 +629,26 @@ export function ProfileDialog({
                   >
                     Năm mất:
                   </Label>
-                  <div className="">{node?.deathday || "-"}</div>
+                  {(mode == "view" ||
+                    (mode === "review" && !node?.hasEditReq)) && (
+                    <div className="">{node?.birthday}</div>
+                  )}
+                  {mode == "review" && node?.hasEditReq && (
+                    <div className="flex gap-1 justify-start">
+                      {historyData?.deathday === node?.deathday ? (
+                        <span>{node?.deathday || "-"}</span>
+                      ) : (
+                        <>
+                          <span className="pr-2">
+                            {historyData?.deathday || "-"}
+                          </span>
+                          <span className="bg-orange-400">
+                            {node?.deathday}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
               <div className="flex items-center ">
@@ -445,7 +658,26 @@ export function ProfileDialog({
                 >
                   Nơi Sinh:
                 </Label>
-                <div className="">{node?.birthPlace || "-"}</div>
+                {(mode == "view" ||
+                  (mode === "review" && !node?.hasEditReq)) && (
+                  <div className="">{node?.birthPlace}</div>
+                )}
+                {mode == "review" && node?.hasEditReq && (
+                  <div className="flex gap-1 justify-start">
+                    {historyData?.birthPlace === node?.birthPlace ? (
+                      <span>{node?.birthPlace || "-"}</span>
+                    ) : (
+                      <>
+                        <span className="pr-2">
+                          {historyData?.birthPlace || "-"}
+                        </span>
+                        <span className="bg-orange-400">
+                          {node?.birthPlace}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="flex items-center ">
                 <Label
@@ -454,7 +686,24 @@ export function ProfileDialog({
                 >
                   Địa chỉ:
                 </Label>
-                <div className="">{node?.address || "-"}</div>
+                {(mode == "view" ||
+                  (mode === "review" && !node?.hasEditReq)) && (
+                  <div className="">{node?.address}</div>
+                )}
+                {mode == "review" && node?.hasEditReq && (
+                  <div className="flex gap-1 justify-start">
+                    {historyData?.address === node?.address ? (
+                      <span>{node?.address || "-"}</span>
+                    ) : (
+                      <>
+                        <span className="pr-2">
+                          {historyData?.address || "-"}
+                        </span>
+                        <span className="bg-orange-400">{node?.address}</span>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="flex items-center ">
                 <Label
@@ -463,21 +712,53 @@ export function ProfileDialog({
                 >
                   Số điện thoại:
                 </Label>
-                <div className="">{node?.phoneNum || "-"}</div>
+                {(mode == "view" ||
+                  (mode === "review" && !node?.hasEditReq)) && (
+                  <div className="">{node?.phoneNum}</div>
+                )}
+                {mode == "review" && node?.hasEditReq && (
+                  <div className="flex gap-1 justify-start">
+                    {historyData?.phoneNum === node?.phoneNum ? (
+                      <span>{node?.phoneNum || "-"}</span>
+                    ) : (
+                      <>
+                        <span className="pr-2">
+                          {historyData?.phoneNum || "-"}
+                        </span>
+                        <span className="bg-orange-400">{node?.phoneNum}</span>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="flex items-center ">
                 <Label
                   htmlFor="name"
                   className="text-left w-[120px] font-[500] text-[16px]"
                 >
-                  Khác:
+                  Thông tin khác:
                 </Label>
-                <div className="">{node?.note || "-"}</div>
+                {(mode == "view" ||
+                  (mode === "review" && !node?.hasEditReq)) && (
+                  <div className="">{node?.note}</div>
+                )}
+                {mode == "review" && node?.hasEditReq && (
+                  <div className="flex gap-1 justify-start">
+                    {historyData?.note === node?.note ? (
+                      <span>{node?.note || "-"}</span>
+                    ) : (
+                      <>
+                        <span className="pr-2">{historyData?.note || "-"}</span>
+                        <span className="bg-orange-400">{node?.note}</span>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
         )}
-        {mode !== "view" && (
+        {mode !== "view" && mode !== "review" && (
           <div className="p-4">
             <DialogHeader>
               <DialogTitle>
@@ -522,19 +803,21 @@ export function ProfileDialog({
                   }}
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="gender" className="text-left">
-                  Gới tính:
-                </Label>
+              {mode !== "edit" && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="gender" className="text-left">
+                    Gới tính:
+                  </Label>
 
-                <GenderSelect
-                  value={data?.gender || ""}
-                  onChange={(value) =>
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    setData({ ...data, gender: value as any })
-                  }
-                />
-              </div>
+                  <GenderSelect
+                    value={data?.gender || ""}
+                    onChange={(value) =>
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      setData({ ...data, gender: value as any })
+                    }
+                  />
+                </div>
+              )}
               {mode === "addChild" && (
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="birthday" className="text-left">
@@ -729,14 +1012,14 @@ export function ProfileDialog({
             </div>
           </div>
         )}
-        {mode !== "view" && (
+        {mode !== "view" && mode !== "review" && (
           <DialogFooter className="p-4">
             <Button onClick={onSubmit}>Lưu</Button>
           </DialogFooter>
         )}
       </DialogContent>
       <Alert
-        messenger="Vui lòng xác nhận"
+        messenger="Chú Ý!!!"
         desc={openAlert?.messenger}
         open={!!openAlert?.messenger}
         onClose={() => setOpenAlert({})}

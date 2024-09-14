@@ -35,6 +35,10 @@ class actionStore {
     if (user) this.loggedUser = user;
   }
 
+  getUser() {
+    return this.loggedUser;
+  }
+
   async getAllData(collectionName: string) {
     const queryData = this.generateQueryGetData(collectionName);
     try {
@@ -73,11 +77,55 @@ class actionStore {
         doc(db, collection, id),
         {
           ...data,
-          hasEditReq: this.loggedUser?.role === "user" ? true : false,
           editUser: this.loggedUser?.name || this.loggedUser?.id,
         },
         { merge: true }
       );
+      callback?.("success");
+    } catch (error) {
+      callback?.("error");
+      console.log("ERROR", error);
+    }
+  }
+
+  // if not is admin save data to editedData collection and set data with hasEdited flag
+  async editNodeByUserRole(
+    id: string,
+    data: any,
+    callback?: (type: "error" | "success") => void
+  ) {
+    try {
+      if (this.loggedUser?.role !== "user") {
+        await setDoc(
+          doc(db, "data", id),
+          {
+            ...data,
+            hasEditReq: false,
+            editUser: this.loggedUser?.name || this.loggedUser?.id,
+          },
+          { merge: true }
+        );
+      } else {
+        const historyData = await getDataById("data", id);
+        await setDoc(
+          doc(db, "data", id),
+          {
+            ...data,
+            hasEditReq: true,
+            editUser: this.loggedUser?.name || this.loggedUser?.id,
+          },
+          { merge: true }
+        );
+        await setDoc(
+          doc(db, "historyData", id),
+          {
+            ...historyData,
+          },
+          { merge: true }
+        );
+      }
+      console.log("edit data", data);
+
       callback?.("success");
     } catch (error) {
       callback?.("error");
@@ -203,6 +251,84 @@ class actionStore {
     }
   }
 
+  deleteNode(allNode: NodeItem[], node: NodeItem, callback?: () => void) {
+    const allNodeToObject: Record<string, NodeItem> = {};
+    allNode?.forEach((node) => {
+      if (node?.id) allNodeToObject[node?.id] = node;
+    });
+    const relatedIds: string[] = [node?.id];
+
+    const getRelateNode = (node: NodeItem) => {
+      if (node?.spouses) {
+        node?.spouses?.forEach((spouse) => {
+          relatedIds.push(spouse.id);
+        });
+      }
+      const childList = node?.children;
+      if (childList.length > 0)
+        childList?.forEach((child) => {
+          relatedIds.push(child.id);
+          if (allNodeToObject[child.id]?.children)
+            getRelateNode(allNodeToObject[child.id]);
+        });
+    };
+    const isLeader = node?.parents?.length > 0;
+    if (this.loggedUser?.role !== "user") {
+      if (!isLeader) {
+        const spouseNodeId = node?.spouses.length && node?.spouses?.[0]?.id;
+        if (spouseNodeId) {
+          const spousesNode = allNodeToObject[spouseNodeId];
+          editData("data", spouseNodeId, {
+            spouses: spousesNode?.spouses?.filter(
+              (item) => item?.id !== node?.id
+            ),
+          });
+        }
+        if (node?.children?.length > 0) {
+          node?.children?.forEach((child) => {
+            const childNode = allNodeToObject[child.id];
+            editData("data", child.id, {
+              parents: childNode?.parents?.filter(
+                (item) => item?.id !== node?.id
+              ),
+            });
+          });
+        }
+        deleteItem("data", node?.id, () => callback?.());
+      }
+      if (isLeader) {
+        getRelateNode(node);
+        // change parent data (delete child with delete id)
+        node?.parents?.forEach((parent) => {
+          const parentData = allNodeToObject[parent.id];
+          const childrenList = [...parentData?.children];
+          if (childrenList?.length > 0) {
+            editData("data", parent.id, {
+              children: childrenList.filter((child) => child.id !== node?.id),
+              hasDeleteReq: true,
+            });
+          }
+        });
+        deleteMultipleDocs(relatedIds, () => callback?.());
+      }
+      console.log("related", relatedIds);
+    } else {
+      if (!isLeader) {
+        editData("data", node.id, {
+          hasDeleteReq: true,
+        });
+      } else {
+        relatedIds?.forEach((item) => {
+          editData("data", item, {
+            hasDeleteReq: true,
+            deleteId: node?.id,
+          });
+        });
+      }
+      callback?.();
+    }
+  }
+
   async runFakeData(dataArray: NodeItem[]) {
     try {
       await this.deleteAllDataFromFirestore();
@@ -260,6 +386,12 @@ export const editData = (
   callback?: (type: "error" | "success") => void
 ) => actions().editData(collection, id, data, callback);
 
+export const editNodeByUserRole = (
+  id: string,
+  data: any,
+  callback?: (type: "error" | "success") => void
+) => actions().editNodeByUserRole(id, data, callback);
+
 export const getDataById = (collection: string, id: string) =>
   actions().getDataById(collection, id);
 
@@ -280,3 +412,11 @@ export const deleteAllDataFromFirestore = () =>
 
 export const runFakeData = (dataArray: NodeItem[]) =>
   actions().runFakeData(dataArray);
+
+export const deleteNode = (
+  allNode: NodeItem[],
+  node: NodeItem,
+  callback?: () => void
+) => actions().deleteNode(allNode, node, callback);
+
+export const getUser = () => actions().getUser();

@@ -1,8 +1,10 @@
 "use client";
 import { NodeItem } from "@/type";
 import { Avatar, AvatarImage } from "@radix-ui/react-avatar";
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import userIcon from "../../assets/avatar.jpg";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/config/firebase";
 
 interface FamilyNodeProps {
   node: NodeItem;
@@ -19,14 +21,24 @@ export const FamilyNode = React.memo(function FamilyNode({
   style,
 }: FamilyNodeProps) {
   const clickHandler = useCallback(() => onClick(node.id), [node.id, onClick]);
+  const [userId, setUserId] = useState("");
+  const [loggedInUser] = useAuthState(auth);
+
+  useEffect(() => {
+    if (loggedInUser) setUserId(loggedInUser?.uid || "");
+  }, [loggedInUser]);
 
   return (
-    <div className="absolute flex p-2.5" style={style}>
+    <div className={`absolute flex p-2.5`} style={style}>
       <div
         className={`relative flex flex-1 flex-col items-center justify-start rounded-md  cursor-pointer ${
           node.gender === "male"
-            ? "border-2  bg-[#fff8dc]"
+            ? "border  bg-[#fff8dc]"
             : "border  bg-[#f0ffff]"
+        } ${
+          node?.userId && userId && node?.userId === userId
+            ? "border-1 border-[#f04c4c]"
+            : ""
         }`}
         onClick={clickHandler}
       >
@@ -45,6 +57,15 @@ export const FamilyNode = React.memo(function FamilyNode({
           {node?.isAlive ? "nay" : node?.deathday || "-"}
         </div>
       </div>
+      {node.hasDeleteReq && (
+        <div className="absolute top-[6px] right-[14px] w-[6px] h-[6px] border border-[rgba(0,0,0,0.2)] rounded-tr-[2px] bg-red-300 cursor-pointer"></div>
+      )}
+      {node.hasAddReq && (
+        <div className="absolute top-[6px] right-[14px] w-[6px] h-[6px] border border-[rgba(0,0,0,0.2)] rounded-tr-[2px] bg-yellow-200 cursor-pointer"></div>
+      )}
+      {node.hasEditReq && (
+        <div className="absolute top-[6px] right-[14px] w-[6px] h-[6px] border border-[rgba(0,0,0,0.2)] rounded-tr-[2px] bg-cyan-300	 cursor-pointer"></div>
+      )}
     </div>
   );
 });

@@ -22,6 +22,7 @@ export interface NodeItem extends ExtNode {
   hasDeleteReq?: boolean;
   hasAddReq?: boolean;
   editUser?: string;
+  deleteId?: string;
 }
 
 export interface NavItem {

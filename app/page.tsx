@@ -9,7 +9,7 @@ import { PinchZoomPan } from "../PinchZoomPan/PinchZoomPan";
 import { FamilyNode } from "../components/FamilyNode/FamilyNode";
 import { NODE_HEIGHT, NODE_WIDTH, SOURCES } from "../constants/const";
 import { getNodeStyle } from "@/utils";
-import { getAllData, runFakeData } from "@/actions";
+import { getAllData } from "@/actions";
 
 const sourceKey = "test-tree-n1.json";
 export default function App() {
@@ -35,8 +35,8 @@ export default function App() {
   };
 
   useEffect(() => {
-    // getData();
-    runFakeData(SOURCES[sourceKey] as unknown as NodeItem[]);
+    getData();
+    // runFakeData(SOURCES[sourceKey] as unknown as NodeItem[]);
   }, []);
 
   return (
