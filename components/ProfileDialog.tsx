@@ -348,7 +348,7 @@ export function ProfileDialog({
               {(data?.hasAddReq || data?.hasDeleteReq || data?.hasEditReq) && (
                 <>
                   {userRole === "user" ? (
-                    <div className="bg-blue-200 py-1 px-2 rounded-lg text-sm">
+                    <div className="bg-blue-200 py-1 px-2 rounded-lg text-sm text-black">
                       {data?.hasAddReq
                         ? "Đã được thêm mới, đang đợi xét duyệt yêu cầu"
                         : data?.hasDeleteReq
@@ -493,10 +493,25 @@ export function ProfileDialog({
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
-                            className="w-[140px] mb-2 "
+                            className="w-[160px] mb-2 px-1"
                             variant="default"
                             disabled={node?.hasEditReq || node?.hasDeleteReq}
                           >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="20px"
+                              height="20px"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              className="mr-1"
+                            >
+                              <path
+                                fill-rule="evenodd"
+                                clip-rule="evenodd"
+                                d="M1.5 12C1.5 6.20101 6.20101 1.5 12 1.5C17.799 1.5 22.5 6.20101 22.5 12C22.5 17.799 17.799 22.5 12 22.5C6.20101 22.5 1.5 17.799 1.5 12ZM12.75 8.25C12.75 7.83579 12.4142 7.5 12 7.5C11.5858 7.5 11.25 7.83579 11.25 8.25V11.25L8.25 11.25C7.83579 11.25 7.5 11.5858 7.5 12C7.5 12.4142 7.83579 12.75 8.25 12.75L11.25 12.75V15.75C11.25 16.1642 11.5858 16.5 12 16.5C12.4142 16.5 12.75 16.1642 12.75 15.75V12.75H15.75C16.1642 12.75 16.5 12.4142 16.5 12C16.5 11.5858 16.1642 11.25 15.75 11.25H12.75V8.25Z"
+                                fill="#FFF"
+                              />
+                            </svg>
                             Thêm thành viên
                           </Button>
                         </DropdownMenuTrigger>
@@ -524,7 +539,7 @@ export function ProfileDialog({
                         </DropdownMenuContent>
                       </DropdownMenu>
                       <Button
-                        className="w-[70px] mb-2 bg-red-500 hover:bg-red-600 text-white  rounded transition duration-300 ease-in-out"
+                        className="w-[80px] mb-2 bg-red-500 hover:bg-red-600 text-white  rounded transition duration-300 ease-in-out"
                         onClick={() => {
                           setOpenAlert({
                             messenger:
@@ -559,7 +574,25 @@ export function ProfileDialog({
                   )
                 ) : (
                   <>
-                    <AuthButton variant="default" className="w-[150px] mb-2  ">
+                    <AuthButton
+                      variant="default"
+                      className="w-[150px] mb-2  px-2"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20px"
+                        height="20px"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        className="mr-1"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          clip-rule="evenodd"
+                          d="M1.5 12C1.5 6.20101 6.20101 1.5 12 1.5C17.799 1.5 22.5 6.20101 22.5 12C22.5 17.799 17.799 22.5 12 22.5C6.20101 22.5 1.5 17.799 1.5 12ZM12.75 8.25C12.75 7.83579 12.4142 7.5 12 7.5C11.5858 7.5 11.25 7.83579 11.25 8.25V11.25L8.25 11.25C7.83579 11.25 7.5 11.5858 7.5 12C7.5 12.4142 7.83579 12.75 8.25 12.75L11.25 12.75V15.75C11.25 16.1642 11.5858 16.5 12 16.5C12.4142 16.5 12.75 16.1642 12.75 15.75V12.75H15.75C16.1642 12.75 16.5 12.4142 16.5 12C16.5 11.5858 16.1642 11.25 15.75 11.25H12.75V8.25Z"
+                          fill="#FFF"
+                        />
+                      </svg>
                       Thêm Thành viên
                     </AuthButton>
                     <AuthButton className="w-[80px] mb-2 bg-red-500 hover:bg-red-600 text-white  rounded transition duration-300 ease-in-out">
@@ -608,7 +641,7 @@ export function ProfileDialog({
               <div className="flex items-center">
                 <Label
                   htmlFor="name"
-                  className="text-left w-[120px] font-[500] text-[16px]"
+                  className="text-left w-[120px] font-[600] text-[16px]"
                 >
                   Tên:
                 </Label>
@@ -632,7 +665,7 @@ export function ProfileDialog({
               <div className="flex items-center ">
                 <Label
                   htmlFor="name"
-                  className="text-left w-[120px] font-[500] text-[16px]"
+                  className="text-left w-[120px] font-[600] text-[16px]"
                 >
                   Giới tính:
                 </Label>
@@ -660,7 +693,7 @@ export function ProfileDialog({
               <div className="flex items-center ">
                 <Label
                   htmlFor="name"
-                  className="text-left w-[120px] font-[500] text-[16px]"
+                  className="text-left w-[120px] font-[600] text-[16px]"
                 >
                   Năm sinh:
                 </Label>
@@ -687,7 +720,7 @@ export function ProfileDialog({
                 <div className="flex items-center ">
                   <Label
                     htmlFor="name"
-                    className="text-left w-[120px] font-[500] text-[16px]"
+                    className="text-left w-[120px] font-[600] text-[16px]"
                   >
                     Năm mất:
                   </Label>
@@ -716,7 +749,7 @@ export function ProfileDialog({
               <div className="flex items-center ">
                 <Label
                   htmlFor="name"
-                  className="text-left w-[120px] font-[500] text-[16px]"
+                  className="text-left w-[120px] font-[600] text-[16px]"
                 >
                   Nơi Sinh:
                 </Label>
@@ -744,7 +777,7 @@ export function ProfileDialog({
               <div className="flex items-center ">
                 <Label
                   htmlFor="name"
-                  className="text-left w-[120px] font-[500] text-[16px]"
+                  className="text-left w-[120px] font-[600] text-[16px]"
                 >
                   Địa chỉ:
                 </Label>
@@ -770,7 +803,7 @@ export function ProfileDialog({
               <div className="flex items-center ">
                 <Label
                   htmlFor="name"
-                  className="text-left w-[120px] font-[500] text-[16px]"
+                  className="text-left w-[120px] font-[600] text-[16px]"
                 >
                   Số điện thoại:
                 </Label>
@@ -796,7 +829,7 @@ export function ProfileDialog({
               <div className="flex items-center ">
                 <Label
                   htmlFor="name"
-                  className="text-left w-[120px] font-[500] text-[16px]"
+                  className="text-left w-[120px] font-[600] text-[16px]"
                 >
                   Thông tin khác:
                 </Label>
@@ -845,7 +878,10 @@ export function ProfileDialog({
                 />
               </Avatar>
               <div className="flex items-center ml-2">
-                <Button className="w-full" onClick={handleAddMe}>
+                <Button
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded transition duration-300 ease-in-ou"
+                  onClick={handleAddMe}
+                >
                   {itsMe ? "Đây không phải tôi" : "Đây là tôi"}{" "}
                 </Button>
               </div>
