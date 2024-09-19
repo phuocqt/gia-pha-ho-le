@@ -716,35 +716,268 @@ export function ProfileDialog({
                   </div>
                 )}
               </div>
-              {node?.isAlive && (
-                <div className="flex items-center ">
-                  <Label
-                    htmlFor="name"
-                    className="text-left w-[120px] font-[600] text-[16px]"
-                  >
-                    Năm mất:
-                  </Label>
-                  {(mode == "view" ||
-                    (mode === "review" && !node?.hasEditReq)) && (
-                    <div className="">{node?.birthday}</div>
-                  )}
-                  {mode == "review" && node?.hasEditReq && (
-                    <div className="flex gap-1 justify-start">
-                      {historyData?.deathday === node?.deathday ? (
-                        <span>{node?.deathday || "-"}</span>
-                      ) : (
-                        <>
-                          <span className="pr-2">
-                            {historyData?.deathday || "-"}
-                          </span>
-                          <span className="bg-orange-400">
-                            {node?.deathday}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
+              {!node?.isAlive && (
+                <>
+                  <div className="flex items-center ">
+                    <Label
+                      htmlFor="name"
+                      className="text-left w-[120px] font-[600] text-[16px]"
+                    >
+                      Năm mất:
+                    </Label>
+                    {(mode == "view" ||
+                      (mode === "review" && !node?.hasEditReq)) && (
+                      <div className="">{node?.birthday}</div>
+                    )}
+                    {mode == "review" && node?.hasEditReq && (
+                      <div className="flex gap-1 justify-start">
+                        {historyData?.deathday === node?.deathday ? (
+                          <span>{node?.deathday || "-"}</span>
+                        ) : (
+                          <>
+                            <span className="pr-2">
+                              {historyData?.deathday || "-"}
+                            </span>
+                            <span className="bg-orange-400">
+                              {node?.deathday}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center ">
+                    <Label
+                      htmlFor="barialLocation"
+                      className="text-left w-[120px] font-[600] text-[16px]"
+                    >
+                      Vị trí mộ:
+                    </Label>
+                    {(mode == "view" ||
+                      (mode === "review" && !node?.hasEditReq)) && (
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          if (
+                            data?.burialLocation &&
+                            /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
+                              data?.burialLocation
+                            )
+                          )
+                            window.open(data?.burialLocation, "_blank");
+                        }}
+                        className="h-[30px] w-[170px] col-span-3 font-bold px-2  rounded mr-2 border border-blue-500 text-blue-500"
+                        disabled={
+                          !(
+                            data?.burialLocation &&
+                            /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
+                              data?.burialLocation
+                            )
+                          )
+                        }
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          xmlnsXlink="http://www.w3.org/1999/xlink"
+                          version="1.0"
+                          id="Layer_1"
+                          width="20px"
+                          height="20px"
+                          viewBox="0 0 64 64"
+                          enable-background="new 0 0 64 64"
+                          className="mr-2"
+                        >
+                          <g>
+                            <path
+                              fill="#F76D57"
+                              d="M32,52.789l-12-18C18.5,32,16,28.031,16,24c0-8.836,7.164-16,16-16s16,7.164,16,16   c0,4.031-2.055,8-4,10.789L32,52.789z"
+                            />
+                            <g>
+                              <path
+                                fill="#394240"
+                                d="M32,0C18.746,0,8,10.746,8,24c0,5.219,1.711,10.008,4.555,13.93c0.051,0.094,0.059,0.199,0.117,0.289    l16,24C29.414,63.332,30.664,64,32,64s2.586-0.668,3.328-1.781l16-24c0.059-0.09,0.066-0.195,0.117-0.289    C54.289,34.008,56,29.219,56,24C56,10.746,45.254,0,32,0z M44,34.789l-12,18l-12-18C18.5,32,16,28.031,16,24    c0-8.836,7.164-16,16-16s16,7.164,16,16C48,28.031,45.945,32,44,34.789z"
+                              />
+                              <circle fill="#394240" cx="32" cy="24" r="8" />
+                            </g>
+                          </g>
+                        </svg>
+                        Xem trên bản đồ
+                      </Button>
+                    )}
+                    {mode == "review" && node?.hasEditReq && (
+                      <div className="flex gap-1 justify-start">
+                        {historyData?.burialLocation ===
+                        node?.burialLocation ? (
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              if (
+                                data?.burialLocation &&
+                                /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
+                                  data?.burialLocation
+                                )
+                              )
+                                window.open(data?.burialLocation, "_blank");
+                            }}
+                            className="w-[170px]  col-span-3 font-bold px-2  rounded mr-2 ml-[100px] border border-blue-500 text-blue-500"
+                            disabled={
+                              !(
+                                data?.burialLocation &&
+                                /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
+                                  data?.burialLocation
+                                )
+                              )
+                            }
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              xmlnsXlink="http://www.w3.org/1999/xlink"
+                              version="1.0"
+                              id="Layer_1"
+                              width="20px"
+                              height="20px"
+                              viewBox="0 0 64 64"
+                              enable-background="new 0 0 64 64"
+                              className="mr-2"
+                            >
+                              <g>
+                                <path
+                                  fill="#F76D57"
+                                  d="M32,52.789l-12-18C18.5,32,16,28.031,16,24c0-8.836,7.164-16,16-16s16,7.164,16,16   c0,4.031-2.055,8-4,10.789L32,52.789z"
+                                />
+                                <g>
+                                  <path
+                                    fill="#394240"
+                                    d="M32,0C18.746,0,8,10.746,8,24c0,5.219,1.711,10.008,4.555,13.93c0.051,0.094,0.059,0.199,0.117,0.289    l16,24C29.414,63.332,30.664,64,32,64s2.586-0.668,3.328-1.781l16-24c0.059-0.09,0.066-0.195,0.117-0.289    C54.289,34.008,56,29.219,56,24C56,10.746,45.254,0,32,0z M44,34.789l-12,18l-12-18C18.5,32,16,28.031,16,24    c0-8.836,7.164-16,16-16s16,7.164,16,16C48,28.031,45.945,32,44,34.789z"
+                                  />
+                                  <circle
+                                    fill="#394240"
+                                    cx="32"
+                                    cy="24"
+                                    r="8"
+                                  />
+                                </g>
+                              </g>
+                            </svg>
+                            Xem trên bản đồ
+                          </Button>
+                        ) : (
+                          <>
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                if (
+                                  historyData?.burialLocation &&
+                                  /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
+                                    historyData?.burialLocation
+                                  )
+                                )
+                                  window.open(
+                                    historyData?.burialLocation,
+                                    "_blank"
+                                  );
+                              }}
+                              className="w-[170px]  col-span-3 font-bold px-2  rounded mr-2 ml-[100px] border border-blue-500 text-blue-500"
+                              disabled={
+                                !(
+                                  historyData?.burialLocation &&
+                                  /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
+                                    historyData?.burialLocation
+                                  )
+                                )
+                              }
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                xmlnsXlink="http://www.w3.org/1999/xlink"
+                                version="1.0"
+                                id="Layer_1"
+                                width="20px"
+                                height="20px"
+                                viewBox="0 0 64 64"
+                                enable-background="new 0 0 64 64"
+                                className="mr-2"
+                              >
+                                <g>
+                                  <path
+                                    fill="#F76D57"
+                                    d="M32,52.789l-12-18C18.5,32,16,28.031,16,24c0-8.836,7.164-16,16-16s16,7.164,16,16   c0,4.031-2.055,8-4,10.789L32,52.789z"
+                                  />
+                                  <g>
+                                    <path
+                                      fill="#394240"
+                                      d="M32,0C18.746,0,8,10.746,8,24c0,5.219,1.711,10.008,4.555,13.93c0.051,0.094,0.059,0.199,0.117,0.289    l16,24C29.414,63.332,30.664,64,32,64s2.586-0.668,3.328-1.781l16-24c0.059-0.09,0.066-0.195,0.117-0.289    C54.289,34.008,56,29.219,56,24C56,10.746,45.254,0,32,0z M44,34.789l-12,18l-12-18C18.5,32,16,28.031,16,24    c0-8.836,7.164-16,16-16s16,7.164,16,16C48,28.031,45.945,32,44,34.789z"
+                                    />
+                                    <circle
+                                      fill="#394240"
+                                      cx="32"
+                                      cy="24"
+                                      r="8"
+                                    />
+                                  </g>
+                                </g>
+                              </svg>
+                              Xem
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                if (
+                                  node?.burialLocation &&
+                                  /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
+                                    node?.burialLocation
+                                  )
+                                )
+                                  window.open(node?.burialLocation, "_blank");
+                              }}
+                              className="w-[170px]  col-span-3 font-bold px-2  rounded mr-2 ml-[100px] border border-orange-400 text-orange-400"
+                              disabled={
+                                !(
+                                  node?.burialLocation &&
+                                  /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
+                                    node?.burialLocation
+                                  )
+                                )
+                              }
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                xmlnsXlink="http://www.w3.org/1999/xlink"
+                                version="1.0"
+                                id="Layer_1"
+                                width="20px"
+                                height="20px"
+                                viewBox="0 0 64 64"
+                                enable-background="new 0 0 64 64"
+                                className="mr-2"
+                              >
+                                <g>
+                                  <path
+                                    fill="#F76D57"
+                                    d="M32,52.789l-12-18C18.5,32,16,28.031,16,24c0-8.836,7.164-16,16-16s16,7.164,16,16   c0,4.031-2.055,8-4,10.789L32,52.789z"
+                                  />
+                                  <g>
+                                    <path
+                                      fill="#394240"
+                                      d="M32,0C18.746,0,8,10.746,8,24c0,5.219,1.711,10.008,4.555,13.93c0.051,0.094,0.059,0.199,0.117,0.289    l16,24C29.414,63.332,30.664,64,32,64s2.586-0.668,3.328-1.781l16-24c0.059-0.09,0.066-0.195,0.117-0.289    C54.289,34.008,56,29.219,56,24C56,10.746,45.254,0,32,0z M44,34.789l-12,18l-12-18C18.5,32,16,28.031,16,24    c0-8.836,7.164-16,16-16s16,7.164,16,16C48,28.031,45.945,32,44,34.789z"
+                                    />
+                                    <circle
+                                      fill="#394240"
+                                      cx="32"
+                                      cy="24"
+                                      r="8"
+                                    />
+                                  </g>
+                                </g>
+                              </svg>
+                              Xem
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
               <div className="flex items-center ">
                 <Label
@@ -1035,19 +1268,82 @@ export function ProfileDialog({
               </div>
 
               {!data?.isAlive && (
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="deathday" className="text-left">
-                    Năm mất:
-                  </Label>
-                  <ValidatedYearInput
-                    id="deathday"
-                    value={data?.deathday || ""}
-                    className="col-span-3"
-                    onChange={(value) => {
-                      setData({ ...data, deathday: value });
-                    }}
-                  />
-                </div>
+                <>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="deathday" className="text-left">
+                      Năm mất:
+                    </Label>
+                    <ValidatedYearInput
+                      id="deathday"
+                      value={data?.deathday || ""}
+                      className="col-span-3"
+                      onChange={(value) => {
+                        setData({ ...data, deathday: value });
+                      }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="burialLocation" className="text-left">
+                      Vị trí mộ:
+                    </Label>
+                    <Input
+                      id="burialLocation"
+                      value={data?.burialLocation || ""}
+                      className="col-span-3"
+                      onChange={(e) => {
+                        setData({ ...data, burialLocation: e.target.value });
+                      }}
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        if (
+                          data?.burialLocation &&
+                          /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
+                            data?.burialLocation
+                          )
+                        )
+                          window.open(data?.burialLocation, "_blank");
+                      }}
+                      className="w-[170px]  col-span-3 font-bold px-2  rounded mr-2 ml-[100px] border border-blue-500 text-blue-500"
+                      disabled={
+                        !(
+                          data?.burialLocation &&
+                          /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
+                            data?.burialLocation
+                          )
+                        )
+                      }
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        xmlnsXlink="http://www.w3.org/1999/xlink"
+                        version="1.0"
+                        id="Layer_1"
+                        width="20px"
+                        height="20px"
+                        viewBox="0 0 64 64"
+                        enable-background="new 0 0 64 64"
+                        className="mr-2"
+                      >
+                        <g>
+                          <path
+                            fill="#F76D57"
+                            d="M32,52.789l-12-18C18.5,32,16,28.031,16,24c0-8.836,7.164-16,16-16s16,7.164,16,16   c0,4.031-2.055,8-4,10.789L32,52.789z"
+                          />
+                          <g>
+                            <path
+                              fill="#394240"
+                              d="M32,0C18.746,0,8,10.746,8,24c0,5.219,1.711,10.008,4.555,13.93c0.051,0.094,0.059,0.199,0.117,0.289    l16,24C29.414,63.332,30.664,64,32,64s2.586-0.668,3.328-1.781l16-24c0.059-0.09,0.066-0.195,0.117-0.289    C54.289,34.008,56,29.219,56,24C56,10.746,45.254,0,32,0z M44,34.789l-12,18l-12-18C18.5,32,16,28.031,16,24    c0-8.836,7.164-16,16-16s16,7.164,16,16C48,28.031,45.945,32,44,34.789z"
+                            />
+                            <circle fill="#394240" cx="32" cy="24" r="8" />
+                          </g>
+                        </g>
+                      </svg>
+                      Xem trên bản đồ
+                    </Button>
+                  </div>
+                </>
               )}
 
               <div className="grid grid-cols-4 items-center gap-4">
