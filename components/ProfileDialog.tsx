@@ -394,7 +394,7 @@ export function ProfileDialog({
                         data?.hasDeleteReq ||
                         data?.hasEditReq) && (
                         <div className="flex gap-1 h-[30px]">
-                          <span>người Yêu Cầu: </span>
+                          <span>người yêu cầu: </span>
                           <span className="font-bold">
                             {" "}
                             {`${node?.editUser}`}
