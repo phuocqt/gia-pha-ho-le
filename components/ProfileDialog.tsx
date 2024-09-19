@@ -577,6 +577,7 @@ export function ProfileDialog({
                     <AuthButton
                       variant="default"
                       className="w-[150px] mb-2  px-2"
+                      disabled={node?.hasEditReq || node?.hasDeleteReq}
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -595,7 +596,10 @@ export function ProfileDialog({
                       </svg>
                       Thêm Thành viên
                     </AuthButton>
-                    <AuthButton className="w-[80px] mb-2 bg-red-500 hover:bg-red-600 text-white  rounded transition duration-300 ease-in-out">
+                    <AuthButton
+                      disabled={node?.hasEditReq || node?.hasDeleteReq}
+                      className="w-[80px] mb-2 bg-red-500 hover:bg-red-600 text-white  rounded transition duration-300 ease-in-out"
+                    >
                       <svg
                         stroke="currentColor"
                         fill="currentColor"
