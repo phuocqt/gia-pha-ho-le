@@ -10,9 +10,12 @@ import css from "../App.module.css";
 import { PinchZoomPan } from "../PinchZoomPan/PinchZoomPan";
 import { FamilyNode } from "../components/FamilyNode/FamilyNode";
 import { NODE_HEIGHT, NODE_WIDTH, SOURCES } from "../constants/const";
+import { useRouter } from "next/navigation";
 
 const sourceKey = "test-tree-n1.json";
 export default function App() {
+  const router = useRouter();
+
   const [nodes, setNodes] = useState<NodeItem[]>(
     SOURCES[sourceKey] as unknown as NodeItem[]
   );
@@ -70,6 +73,7 @@ export default function App() {
         open={!!selected}
         onClose={(success) => {
           setSelectId("");
+          router.push("/");
           if (success) {
             setTimeout(() => {
               getData();

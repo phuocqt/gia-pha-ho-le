@@ -28,15 +28,17 @@ export const FamilyNode = React.memo(function FamilyNode({
   const deleteId = searchParams.get("deleteId");
   const getBorderColor = () => {
     if (deleteId === node?.id) return "[#f04c4c]";
-    if (deleteId === node?.deleteId) return "[#FFFF33]";
-    if (node?.userId && userId && node?.userId === userId) return "[#3B82F6]";
+    if (deleteId === node?.deleteId) return "lime-300";
+    if (node?.userId && userId && node?.userId === userId) return "blue-500";
   };
-
-  console.log("color", getBorderColor());
+  const borderColor = getBorderColor();
+  console.log("color", borderColor, userId, node?.userId);
 
   useEffect(() => {
-    if (loggedInUser) setUserId(loggedInUser?.uid || "");
-  }, [loggedInUser]);
+    console.log("herre", loggedInUser?.uid);
+
+    if (loggedInUser?.uid) setUserId(loggedInUser?.uid || "");
+  }, [loggedInUser?.uid]);
 
   return (
     <div className={`absolute flex p-2.5`} style={style}>
@@ -45,7 +47,7 @@ export const FamilyNode = React.memo(function FamilyNode({
           node.gender === "male"
             ? "border  bg-[#fff8dc]"
             : "border  bg-[#f0ffff]"
-        } ${getBorderColor() ? `border-1 border-${getBorderColor()}` : ""}`}
+        } border-${borderColor}`}
         onClick={clickHandler}
       >
         <Avatar

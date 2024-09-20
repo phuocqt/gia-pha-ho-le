@@ -268,7 +268,6 @@ export function ProfileDialog({
     if (node?.hasDeleteReq) {
       if (node?.id === node?.deleteId && allNode)
         deleteNode(allNode, node, () => {
-          router.push("/");
           onClose?.("success");
         });
       else
@@ -292,7 +291,6 @@ export function ProfileDialog({
         hasEditReq: false,
       });
       setData({ ...data, hasEditReq: false });
-
       deleteItem("historyData", node?.id || "");
       setHistoryData(undefined);
       setMode("view");
@@ -457,7 +455,7 @@ export function ProfileDialog({
                     setMode("edit");
                     setData({ ...(node as any) });
                   }}
-                  disabled={node?.hasEditReq || node?.hasDeleteReq}
+                  disabled={data?.hasEditReq || data?.hasDeleteReq}
                 >
                   <svg
                     stroke="currentColor"
@@ -493,7 +491,7 @@ export function ProfileDialog({
                             },
                           });
                         }}
-                        disabled={node?.hasEditReq || node?.hasDeleteReq}
+                        disabled={data?.hasEditReq || data?.hasDeleteReq}
                       >
                         <svg
                           stroke="currentColor"
@@ -518,7 +516,7 @@ export function ProfileDialog({
                           <Button
                             className="w-[160px] mb-2 px-1"
                             variant="default"
-                            disabled={node?.hasEditReq || node?.hasDeleteReq}
+                            disabled={data?.hasEditReq || data?.hasDeleteReq}
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -545,7 +543,7 @@ export function ProfileDialog({
                               setMode("addSpouses");
                               setData(initSpouse as any);
                             }}
-                            disabled={node?.hasEditReq || node?.hasDeleteReq}
+                            disabled={data?.hasEditReq || data?.hasDeleteReq}
                           >
                             Thêm {`${node?.gender === "male" ? "Vợ" : "Chồng"}`}
                           </DropdownMenuItem>
@@ -555,7 +553,7 @@ export function ProfileDialog({
                               setMode("addChild");
                               setData(initChild);
                             }}
-                            disabled={node?.hasEditReq || node?.hasDeleteReq}
+                            disabled={data?.hasEditReq || data?.hasDeleteReq}
                           >
                             Thêm Con
                           </DropdownMenuItem>
@@ -754,7 +752,7 @@ export function ProfileDialog({
                     </Label>
                     {(mode == "view" ||
                       (mode === "review" && !node?.hasEditReq)) && (
-                      <div className="">{node?.birthday}</div>
+                      <div className="">{node?.deathday}</div>
                     )}
                     {mode == "review" && node?.hasEditReq && (
                       <div className="flex gap-1 justify-start">
@@ -846,7 +844,7 @@ export function ProfileDialog({
                               )
                                 window.open(data?.burialLocation, "_blank");
                             }}
-                            className="w-[170px]  col-span-3 font-bold px-2  rounded mr-2 ml-[100px] border border-blue-500 text-blue-500"
+                            className="h-[30px] w-[170px] col-span-3 font-bold px-2 rounded mr-2  border border-blue-500 text-blue-500"
                             disabled={
                               !(
                                 data?.burialLocation &&
@@ -904,7 +902,7 @@ export function ProfileDialog({
                                     "_blank"
                                   );
                               }}
-                              className="w-[170px]  col-span-3 font-bold px-2  rounded mr-2 ml-[100px] border border-blue-500 text-blue-500"
+                              className="h-[30px] w-[100px] col-span-3 font-bold px-2  rounded mr-2 border border-blue-500 text-blue-500"
                               disabled={
                                 !(
                                   historyData?.burialLocation &&
@@ -957,7 +955,7 @@ export function ProfileDialog({
                                 )
                                   window.open(node?.burialLocation, "_blank");
                               }}
-                              className="w-[170px]  col-span-3 font-bold px-2  rounded mr-2 ml-[100px] border border-orange-400 text-orange-400"
+                              className="h-[30px] w-[100px] col-span-3 font-bold px-2 rounded mr-2  border border-orange-400 text-orange-400"
                               disabled={
                                 !(
                                   node?.burialLocation &&

@@ -51,7 +51,6 @@ class actionStore {
   }
 
   async addData(data: NodeItem, callback: (type: "error" | "success") => void) {
-    console.log("add Data", data);
     try {
       await setDoc(doc(db, "data", data.id), {
         ...data,
@@ -71,8 +70,6 @@ class actionStore {
     callback?: (type: "error" | "success") => void
   ) {
     try {
-      console.log("edit data", data, this.loggedUser);
-
       await setDoc(
         doc(db, collection, id),
         {
@@ -95,6 +92,12 @@ class actionStore {
     callback?: (type: "error" | "success") => void
   ) {
     try {
+      const itemData = await getDataById("data", id);
+      if (itemData?.hasEditReq || itemData?.hasDeleteReq) {
+        console.log("failed ");
+        window.location.reload();
+        return;
+      }
       if (this.loggedUser?.role !== "user") {
         await setDoc(
           doc(db, "data", id),
@@ -179,6 +182,11 @@ class actionStore {
     callback?: () => void
   ): Promise<void> {
     try {
+      const itemData = await getDataById(collection, id);
+      if (itemData?.hasEditReq || itemData?.hasDeleteReq) {
+        console.log("failed ");
+        return;
+      }
       if (this.loggedUser?.role !== "user") {
         const docRef = doc(db, collection, id);
         await deleteDoc(docRef);
