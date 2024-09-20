@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import userIcon from "../../assets/avatar.jpg";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/config/firebase";
+import { useSearchParams } from "next/navigation";
 
 interface FamilyNodeProps {
   node: NodeItem;
@@ -23,6 +24,12 @@ export const FamilyNode = React.memo(function FamilyNode({
   const clickHandler = useCallback(() => onClick(node.id), [node.id, onClick]);
   const [userId, setUserId] = useState("");
   const [loggedInUser] = useAuthState(auth);
+  const searchParams = useSearchParams();
+  const deleteId = searchParams.get("deleteId");
+  const getBorderColor = () => {
+    if (deleteId === node?.deleteId) return "[#f04c4c]";
+    if (node?.userId && userId && node?.userId === userId) return "[#3B82F6]";
+  };
 
   useEffect(() => {
     if (loggedInUser) setUserId(loggedInUser?.uid || "");
@@ -37,7 +44,7 @@ export const FamilyNode = React.memo(function FamilyNode({
             : "border  bg-[#f0ffff]"
         } ${
           node?.userId && userId && node?.userId === userId
-            ? "border-1 border-[#f04c4c]"
+            ? `border-1 border-${getBorderColor()}`
             : ""
         }`}
         onClick={clickHandler}
