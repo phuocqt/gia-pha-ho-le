@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+import { getAllData } from "@/actions";
 import { ProfileDialog } from "@/components/ProfileDialog";
 import { NodeItem } from "@/type";
+import { getNodeStyle } from "@/utils";
 import { useEffect, useMemo, useState } from "react";
 import ReactFamilyTree from "react-family-tree";
 import css from "../App.module.css";
 import { PinchZoomPan } from "../PinchZoomPan/PinchZoomPan";
 import { FamilyNode } from "../components/FamilyNode/FamilyNode";
 import { NODE_HEIGHT, NODE_WIDTH, SOURCES } from "../constants/const";
-import { getNodeStyle } from "@/utils";
-import { getAllData } from "@/actions";
 
 const sourceKey = "test-tree-n1.json";
 export default function App() {

@@ -272,9 +272,10 @@ class actionStore {
             getRelateNode(allNodeToObject[child.id]);
         });
     };
-    const isLeader = node?.parents?.length > 0;
+    const singleItem = node?.parents?.length > 0;
+    getRelateNode(node);
     if (this.loggedUser?.role !== "user") {
-      if (!isLeader) {
+      if (!singleItem) {
         const spouseNodeId = node?.spouses.length && node?.spouses?.[0]?.id;
         if (spouseNodeId) {
           const spousesNode = allNodeToObject[spouseNodeId];
@@ -296,8 +297,7 @@ class actionStore {
         }
         deleteItem("data", node?.id, () => callback?.());
       }
-      if (isLeader) {
-        getRelateNode(node);
+      if (singleItem) {
         // change parent data (delete child with delete id)
         node?.parents?.forEach((parent) => {
           const parentData = allNodeToObject[parent.id];
@@ -313,7 +313,7 @@ class actionStore {
       }
       console.log("related", relatedIds);
     } else {
-      if (!isLeader) {
+      if (!singleItem) {
         editData("data", node.id, {
           hasDeleteReq: true,
         });

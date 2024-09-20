@@ -27,9 +27,12 @@ export const FamilyNode = React.memo(function FamilyNode({
   const searchParams = useSearchParams();
   const deleteId = searchParams.get("deleteId");
   const getBorderColor = () => {
-    if (deleteId === node?.deleteId) return "[#f04c4c]";
+    if (deleteId === node?.id) return "[#f04c4c]";
+    if (deleteId === node?.deleteId) return "[#FFFF33]";
     if (node?.userId && userId && node?.userId === userId) return "[#3B82F6]";
   };
+
+  console.log("color", getBorderColor());
 
   useEffect(() => {
     if (loggedInUser) setUserId(loggedInUser?.uid || "");
@@ -42,11 +45,7 @@ export const FamilyNode = React.memo(function FamilyNode({
           node.gender === "male"
             ? "border  bg-[#fff8dc]"
             : "border  bg-[#f0ffff]"
-        } ${
-          node?.userId && userId && node?.userId === userId
-            ? `border-1 border-${getBorderColor()}`
-            : ""
-        }`}
+        } ${getBorderColor() ? `border-1 border-${getBorderColor()}` : ""}`}
         onClick={clickHandler}
       >
         <Avatar

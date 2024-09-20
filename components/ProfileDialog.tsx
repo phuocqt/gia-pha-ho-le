@@ -48,6 +48,7 @@ import {
   getUser,
 } from "@/actions";
 import { renderGender } from "@/utils";
+import { useRouter } from "next/navigation";
 
 export function ProfileDialog({
   open,
@@ -60,6 +61,8 @@ export function ProfileDialog({
   node?: NodeItem;
   allNode?: NodeItem[];
 }) {
+  const router = useRouter();
+
   const [data, setData] = useState({
     ...node,
     children: node?.children || [],
@@ -263,8 +266,19 @@ export function ProfileDialog({
 
   const handleAccept = () => {
     if (node?.hasDeleteReq) {
-      allNode && deleteNode(allNode, node, () => onClose?.("success"));
-      return;
+      if (node?.id === node?.deleteId && allNode)
+        deleteNode(allNode, node, () => {
+          router.push("/");
+          onClose?.("success");
+        });
+      else
+        setOpenAlert({
+          messenger: "bạn cần xét duyệt xoá từ item cha có viền đỏ",
+          onConfirm: () => {
+            router.push(`?deleteId=${node?.deleteId}`);
+            onClose?.();
+          },
+        });
     }
     if (node?.hasAddReq) {
       editData("data", node?.id || "", {
@@ -286,15 +300,24 @@ export function ProfileDialog({
   };
   const handleRestore = () => {
     if (node?.hasDeleteReq) {
-      editData("data", node?.id || "", {
-        hasDeleteReq: false,
-        ...historyData,
-      });
-      setData({ ...data, hasDeleteReq: false });
-      deleteItem("historyData", node?.id || "");
-      setHistoryData(undefined);
-      setMode("view");
-      onClose?.("success");
+      if (node?.id === node?.deleteId && allNode) {
+        allNode?.forEach((item) => {
+          if (item?.deleteId === node?.deleteId)
+            editData("data", item?.id || "", {
+              hasDeleteReq: false,
+              ...historyData,
+            });
+        });
+        router.push(`?deleteId=${node?.deleteId}`);
+        onClose?.("success");
+      } else
+        setOpenAlert({
+          messenger: "bạn cần xét duyệt xoá từ item cha có viền đỏ",
+          onConfirm: () => {
+            router.push(`?deleteId=${node?.deleteId}`);
+            onClose?.();
+          },
+        });
     }
     if (node?.hasAddReq && !!allNode) {
       deleteNode(allNode, node, () => onClose?.("success"));
