@@ -1,9 +1,5 @@
 "use client";
-import {
-  useAuthState,
-  useSignInWithFacebook,
-  useSignInWithGoogle,
-} from "react-firebase-hooks/auth";
+import { useAuthState, useSignInWithGoogle } from "react-firebase-hooks/auth";
 
 import {
   Card,
@@ -19,16 +15,16 @@ import { Button } from "@/components/ui/button";
 
 export default function Login() {
   const [signInWithGoogle] = useSignInWithGoogle(auth);
-  const [signInWithFacebook] = useSignInWithFacebook(auth);
+  // const [signInWithFacebook] = useSignInWithFacebook(auth);
   const [loggedInUser] = useAuthState(auth);
   const router = useRouter();
 
   const signInGoogle = () => {
     signInWithGoogle();
   };
-  const signInFacebook = () => {
-    signInWithFacebook();
-  };
+  // const signInFacebook = () => {
+  //   signInWithFacebook();
+  // };
   useEffect(() => {
     if (loggedInUser) {
       router.push("/");
