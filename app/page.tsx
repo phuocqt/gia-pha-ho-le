@@ -45,7 +45,7 @@ export default function App() {
   return (
     <div className={css.root}>
       {nodes?.length > 0 && (
-        <PinchZoomPan min={0.5} max={2.5} captureWheel className={css.wrapper}>
+        <PinchZoomPan min={0.3} max={5} captureWheel className={css.wrapper}>
           <ReactFamilyTree
             nodes={nodes}
             rootId={rootId}

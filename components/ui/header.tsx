@@ -78,7 +78,7 @@ export default function Header() {
   }, [loggedInUser]);
 
   return (
-    <header className="sticky top-0  z-30 flex h-14 items-center  gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-[#404040] sm:px-6">
+    <header className="sticky top-0  z-30 flex h-14 items-center  gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-[#404040] sm:px-6 overflow-auto">
       <div className="py-2 justify-between flex w-full">
         <div className="flex">
           <div className="mr-3">
@@ -94,7 +94,7 @@ export default function Header() {
           {loggedInUser && userRole === "supperAdmin" && (
             <div className="mr-3">
               <Button>
-                <Link href="/user">Quản lý User</Link>
+                <Link href="/user">Users</Link>
               </Button>
             </div>
           )}
@@ -111,7 +111,7 @@ export default function Header() {
               <Button
                 variant="outline"
                 size="icon"
-                className="overflow-hidden rounded-full"
+                className="overflow-hidden rounded-full min-w-[40px] m-h-[40px]"
               >
                 <Image
                   src={loggedInUser?.photoURL || userIcon}

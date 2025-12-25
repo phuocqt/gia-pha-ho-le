@@ -17,3 +17,12 @@
   position: absolute;
   transform: translate(-50%, -50%);
 }
+
+@media (min-width: 800px) {
+  .highResWrapper {
+    transform: scale(2);
+
+    image-rendering: -webkit-optimize-contrast;
+    shape-rendering: geometricPrecision;
+  }
+}
