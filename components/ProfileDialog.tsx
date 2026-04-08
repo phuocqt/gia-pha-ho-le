@@ -273,15 +273,41 @@ export function ProfileDialog({
             photoURL: "",
           });
         }
-        editData("data", node?.id || "", {
-          userId: loggedInUser?.uid,
-          photoURL: loggedInUser?.photoURL,
-        });
-        setData({
-          ...data,
-          photoURL: loggedInUser?.photoURL as string,
-          userId: loggedInUser?.uid,
-        });
+        
+        // Kiểm tra nếu profile đã có avatar
+        if (data?.photoURL && data.photoURL !== avatarIcon.src) {
+          setOpenAlert({
+            messenger: "Profile này đã có avatar. Bạn có muốn thay thế bằng avatar từ Google không?",
+            onConfirm: async () => {
+              editData("data", node?.id || "", {
+                userId: loggedInUser?.uid,
+                photoURL: loggedInUser?.photoURL,
+              });
+              setData({
+                ...data,
+                photoURL: loggedInUser?.photoURL as string,
+                userId: loggedInUser?.uid,
+              });
+              toast({
+                title: "Đã cập nhật avatar thành công",
+              });
+            }
+          });
+        } else {
+          // Profile chưa có avatar, cập nhật bình thường
+          editData("data", node?.id || "", {
+            userId: loggedInUser?.uid,
+            photoURL: loggedInUser?.photoURL,
+          });
+          setData({
+            ...data,
+            photoURL: loggedInUser?.photoURL as string,
+            userId: loggedInUser?.uid,
+          });
+          toast({
+            title: "Đã cập nhật avatar thành công",
+          });
+        }
       };
       setOpenAlert({
         messenger: `${node?.gender === "male" ? "Ông " : "Bà "} ${
