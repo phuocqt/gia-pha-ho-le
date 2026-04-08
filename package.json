@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@googlemaps/markerclusterer": "^2.5.1",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
@@ -26,6 +27,8 @@
     "@radix-ui/react-toast": "^1.2.1",
     "@tanstack/react-table": "^8.10.7",
     "@types/classnames": "^2.3.1",
+    "@vis.gl/react-google-maps": "latest",
+    "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.0",
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",

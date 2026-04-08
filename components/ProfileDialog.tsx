@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+import React from "react";
 import { AuthButton, Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,7 +23,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "@/config/firebase";
+import { auth, storage } from "@/config/firebase";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import imageCompression from "browser-image-compression";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
@@ -82,6 +85,10 @@ export function ProfileDialog({
     messenger: "",
     onConfirm: () => {},
   });
+  const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string>("");
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const { toast } = useToast();
 
@@ -94,11 +101,133 @@ export function ProfileDialog({
     setMode("review");
   };
 
-  useEffect(() => {
-    if (!!node) {
-      setData({ ...node });
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type.startsWith('image/')) {
+        setSelectedAvatar(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setAvatarPreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        toast({
+          title: "Vui lòng chọn file ảnh",
+          variant: "destructive"
+        });
+      }
+    }
+  };
 
-      setMode("view");
+  const deleteOldAvatar = async (photoURL: string): Promise<void> => {
+    if (!photoURL || photoURL === avatarIcon.src) return;
+    
+    try {
+      // Extract file path from URL
+      // URL format: https://firebasestorage.googleapis.com/v0/b/bucket/o/path%2Ffilename?token=...
+      const url = new URL(photoURL);
+      const pathMatch = url.pathname.match(/\/o\/(.+)(\?|$)/);
+      
+      if (pathMatch) {
+        const filePath = decodeURIComponent(pathMatch[1]);
+        const oldAvatarRef = ref(storage, filePath);
+        
+        console.log('Deleting old avatar:', filePath);
+        await deleteObject(oldAvatarRef);
+        console.log('Old avatar deleted successfully');
+      }
+    } catch (error) {
+      console.error('Error deleting old avatar:', error);
+      // Không hiem thoi loi cho user vi van upload anh moi thanh cong
+    }
+  };
+
+  const handleDeleteAvatar = () => {
+    if (data?.photoURL && data.photoURL !== avatarIcon.src) {
+      setOpenAlert({
+        messenger: "Bạn có chắc chắn muốn xoá avatar này?",
+        onConfirm: async () => {
+          await deleteOldAvatar(data.photoURL!);
+          setData({ ...data, photoURL: "" });
+          toast({
+            title: "Đã xoá avatar thành công",
+          });
+        }
+      });
+    }
+  };
+
+  
+  const uploadAvatar = async (): Promise<string | null> => {
+    if (!selectedAvatar) return null;
+    
+    setUploadingAvatar(true);
+    try {
+      console.log('Starting avatar upload...');
+      console.log('Original file size:', selectedAvatar.size, 'bytes');
+      
+      // Nén ảnh xuống dưới 30KB
+      const compressedFile = await imageCompression(selectedAvatar, {
+        maxSizeMB: 0.03, // 30KB = 0.03MB
+        maxWidthOrHeight: 800,
+        useWebWorker: true,
+        fileType: 'image/jpeg',
+      });
+      
+      console.log('Compressed file size:', compressedFile.size, 'bytes');
+      console.log('Compression ratio:', ((selectedAvatar.size - compressedFile.size) / selectedAvatar.size * 100).toFixed(2) + '%');
+      
+      const avatarRef = ref(storage, `avatars/${uuidv4()}`);
+      console.log('Storage ref created:', avatarRef);
+      
+      await uploadBytes(avatarRef, compressedFile);
+      console.log('Upload bytes completed');
+      
+      const downloadURL = await getDownloadURL(avatarRef);
+      console.log('Download URL obtained:', downloadURL);
+      
+      return downloadURL;
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      
+      // Hiển thị lỗi chi tiết hơn
+      let errorMessage = "Lỗi khi tải ảnh lên";
+      if (error instanceof Error) {
+        if (error.message.includes('CORS')) {
+          errorMessage = "Lỗi CORS - Vui lòng kiểm tra cấu hình Firebase Storage";
+        } else if (error.message.includes('unauthorized')) {
+          errorMessage = "Lỗi phân quyền - Vui lòng kiểm tra quy truy cập Storage";
+        } else if (error.message.includes('network')) {
+          errorMessage = "Lỗi mạng - Vui lòng kiểm tra kết nối";
+        } else {
+          errorMessage = `Lỗi khi tải ảnh lên: ${error.message}`;
+        }
+      }
+      
+      toast({
+        title: errorMessage,
+        variant: "destructive"
+      });
+      return null;
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!!node && open) {
+      setData({ ...node });
+      // Chì set mode khi mode hien tai la "view" de tranh xung dot
+      if (mode === "view") {
+        setMode("view");
+      }
+    }
+    
+    // Reset avatar state when closing dialog
+    if (!open) {
+      setSelectedAvatar(null);
+      setAvatarPreview("");
     }
   }, [node, open]);
   const userRole = getUser()?.role || "user";
@@ -163,19 +292,36 @@ export function ProfileDialog({
     }
   };
 
-  const onSubmit = () => {
+  const onSubmit = async () => {
     if (mode === "edit") {
+      let avatarUrl = data?.photoURL;
+      
+      // Chi upload khi co avatar moi
+      if (selectedAvatar) {
+        // Xóa avatar cu trc khi upload moi
+        if (data?.photoURL && data.photoURL !== avatarIcon.src) {
+          await deleteOldAvatar(data.photoURL);
+        }
+        
+        const uploadedUrl = await uploadAvatar();
+        if (!uploadedUrl) {
+          // Upload that bai, khong tiep tuc luu du lieu
+          return;
+        }
+        avatarUrl = uploadedUrl;
+      }
+      
       editNodeByUserRole(
         node?.id || "",
-        { ...data, editUser: loggedInUser?.uid } as NodeItem,
+        { ...data, photoURL: avatarUrl, editUser: loggedInUser?.uid } as NodeItem,
         (type) => {
           if (type === "error")
             toast({
-              title: "Đã có lỗi, vui lòng thử lại",
+              title: "Da co loi, vui long thu lai",
             });
           if (type === "success")
             toast({
-              title: "Đã cập nhật thành công",
+              title: "Da cap nhat thanh cong",
             });
           onClose?.("success");
         }
@@ -188,9 +334,21 @@ export function ProfileDialog({
         : (node?.spouses?.length || 0) > 0
         ? { id: node?.spouses?.[0].id, type: "blood" }
         : {};
+      
+      let avatarUrl = data?.photoURL;
+      if (selectedAvatar) {
+        const uploadedUrl = await uploadAvatar();
+        if (!uploadedUrl) {
+          // Upload that bai, khong tiep tuc luu du lieu
+          return;
+        }
+        avatarUrl = uploadedUrl;
+      }
+      
       const tempData = {
         ...data,
         id: newId,
+        photoURL: avatarUrl,
         parents: otherParent?.id
           ? [{ id: node?.id || "", type: "blood" }, otherParent]
           : [{ id: node?.id || "", type: "blood" }],
@@ -235,9 +393,20 @@ export function ProfileDialog({
     if (mode === "addSpouses") {
       const newId = uuidv4();
 
+      let avatarUrl = data?.photoURL;
+      if (selectedAvatar) {
+        const uploadedUrl = await uploadAvatar();
+        if (!uploadedUrl) {
+          // Upload that bai, khong tiep tuc luu du lieu
+          return;
+        }
+        avatarUrl = uploadedUrl;
+      }
+
       const tempData = {
         ...data,
         id: newId,
+        photoURL: avatarUrl,
         children: [
           ...(node?.spouses?.length && node?.spouses?.length > 0
             ? []
@@ -1123,18 +1292,62 @@ export function ProfileDialog({
               </DialogTitle>
             </DialogHeader>
             <div className="flex justify-center">
-              <Avatar
-                className={`${
-                  data?.gender === "male"
-                    ? "border-2 border-[#a4ecff] bg-[#fff8dc]"
-                    : "border-2 border-[#fdaed8] bg-[#f0ffff]"
-                } mb-1 w-[120px] h-[120px] rounded-full overflow-hidden mt-2`}
-              >
-                <AvatarImage
-                  src={data?.photoURL || avatarIcon.src}
-                  alt={data?.name}
+              <div className="relative">
+                <Avatar
+                  className={`${
+                    data?.gender === "male"
+                      ? "border-2 border-[#a4ecff] bg-[#fff8dc]"
+                      : "border-2 border-[#fdaed8] bg-[#f0ffff]"
+                  } mb-1 w-[120px] h-[120px] rounded-full overflow-hidden mt-2`}
+                >
+                  <AvatarImage
+                    src={avatarPreview || data?.photoURL || avatarIcon.src}
+                    alt={data?.name}
+                  />
+                </Avatar>
+                
+                {/* Nút upload ảnh mới */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="absolute bottom-0 right-0 rounded-full w-8 h-8 p-0 bg-white border-gray-300"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                >
+                  {uploadingAvatar ? (
+                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 2v20M17 7l-5-5-5 5"/>
+                    </svg>
+                  )}
+                </Button>
+                
+                {/* Nút xoá avatar hiện tại */}
+                {data?.photoURL && data.photoURL !== avatarIcon.src && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-3 right-0 rounded-full w-8 h-8 p-0 bg-red-500 hover:bg-red-600"
+                    onClick={handleDeleteAvatar}
+                    title="Xoá avatar"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                  </Button>
+                )}
+                
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  className="hidden"
                 />
-              </Avatar>
+              </div>
               <div className="flex items-center ml-2">
                 <Button
                   className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded transition duration-300 ease-in-ou"
