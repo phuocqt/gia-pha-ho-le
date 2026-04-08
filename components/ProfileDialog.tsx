@@ -254,7 +254,6 @@ export function ProfileDialog({
       const removeMe = () => {
         editData("data", node?.id || "", {
           userId: "",
-          photoURL: "",
         });
         setData({ ...data, photoURL: "", userId: "" });
       };
