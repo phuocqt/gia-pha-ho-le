@@ -24,6 +24,10 @@ export interface NodeItem extends ExtNode {
   editUser?: string;
   deleteId?: string;
   burialLocation?: string;
+  newPhotoURL?: string;
+  oldPhotoURL?: string;
+  hasDeleteAvatarReq?: boolean;
+  deletedPhotoURL?: string;
 }
 
 export interface NavItem {

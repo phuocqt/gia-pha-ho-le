@@ -148,11 +148,33 @@ export function ProfileDialog({
       setOpenAlert({
         messenger: "Bạn có chắc chắn muốn xoá avatar này?",
         onConfirm: async () => {
-          await deleteOldAvatar(data.photoURL!);
-          setData({ ...data, photoURL: "" });
-          toast({
-            title: "Đã xoá avatar thành công",
-          });
+          // Lưu avatar cũ vào historyData để xử lý sau khi admin duyệt
+          const historyDataWithAvatarDelete = {
+            ...data,
+            hasEditReq: true, // Dùng hasEditReq chung
+            deletedPhotoURL: data.photoURL, // Lưu URL avatar cần xoá
+            editUser: loggedInUser?.uid,
+          };
+          
+          // Lưu vào historyData collection
+          editData("historyData", node?.id || "", historyDataWithAvatarDelete);
+          
+          // Cập nhật node với yêu cầu xoá avatar
+          editNodeByUserRole(
+            node?.id || "",
+            { ...data, photoURL: "", hasEditReq: true, editUser: loggedInUser?.uid } as NodeItem,
+            (type) => {
+              if (type === "error")
+                toast({
+                  title: "Đã có lỗi, vui lòng thử lại",
+                });
+              if (type === "success")
+                toast({
+                  title: "Yêu cầu xoá avatar đã được gửi, đang đợi xét duyệt",
+                });
+              onClose?.("success");
+            }
+          );
         }
       });
     }
@@ -320,20 +342,31 @@ export function ProfileDialog({
   const onSubmit = async () => {
     if (mode === "edit") {
       let avatarUrl = data?.photoURL;
+      let newAvatarUrl = "";
       
       // Chi upload khi co avatar moi
       if (selectedAvatar) {
-        // Xóa avatar cu trc khi upload moi
-        if (data?.photoURL && data.photoURL !== avatarIcon.src) {
-          await deleteOldAvatar(data.photoURL);
-        }
-        
         const uploadedUrl = await uploadAvatar();
         if (!uploadedUrl) {
           // Upload that bai, khong tiep tuc luu du lieu
           return;
         }
+        newAvatarUrl = uploadedUrl;
         avatarUrl = uploadedUrl;
+      }
+      
+      // Lưu dữ liệu cũ vào historyData để admin có thể khôi phục
+      if (selectedAvatar && newAvatarUrl) {
+        // Lưu cả avatar cũ và mới vào history để xử lý sau khi duyệt
+        const historyDataWithAvatar = {
+          ...data,
+          photoURL: data?.photoURL, // Giữ avatar cũ trong history
+          newPhotoURL: newAvatarUrl, // Lưu avatar mới
+          oldPhotoURL: data?.photoURL, // Lưu avatar cũ để xoá sau khi duyệt
+        };
+        
+        // Lưu vào historyData collection
+        editData("historyData", node?.id || "", historyDataWithAvatar);
       }
       
       editNodeByUserRole(
@@ -485,6 +518,17 @@ export function ProfileDialog({
         hasEditReq: false,
       });
       setData({ ...data, hasEditReq: false });
+      
+      // Xoá avatar cũ nếu có thay đổi avatar
+      if (historyData?.newPhotoURL && historyData?.oldPhotoURL) {
+        deleteOldAvatar(historyData.oldPhotoURL);
+      }
+      
+      // Xoá avatar nếu có yêu cầu xoá avatar (trong hasEditReq)
+      if (historyData?.deletedPhotoURL && historyData?.deletedPhotoURL !== historyData?.photoURL) {
+        deleteOldAvatar(historyData.deletedPhotoURL);
+      }
+      
       deleteItem("historyData", node?.id || "");
       setHistoryData(undefined);
       setMode("view");
@@ -520,7 +564,28 @@ export function ProfileDialog({
         hasEditReq: false,
         ...historyData,
       });
-      setData({ ...data, hasEditReq: false });
+      setData({ 
+        ...historyData, 
+        hasEditReq: false,
+        children: historyData?.children || [],
+        siblings: historyData?.siblings || [],
+        spouses: historyData?.spouses || [],
+        parents: historyData?.parents || []
+      });
+      
+      // Xoá avatar mới nếu có thay đổi avatar
+      if (historyData?.newPhotoURL && historyData?.newPhotoURL !== historyData?.photoURL) {
+        deleteOldAvatar(historyData.newPhotoURL);
+      }
+      
+      // Khôi phục avatar nếu có yêu cầu xoá avatar (giữ lại avatar)
+      if (historyData?.deletedPhotoURL && historyData?.deletedPhotoURL !== historyData?.photoURL) {
+        // Cập nhật lại node để giữ avatar
+        editData("data", node?.id || "", {
+          photoURL: historyData.deletedPhotoURL
+        });
+      }
+      
       deleteItem("historyData", node?.id || "");
       setHistoryData(undefined);
       setMode("view");
@@ -605,7 +670,7 @@ export function ProfileDialog({
                             : "Đang duyệt chỉnh sửa"}
                         </Button>
                       )}
-                      {(data?.hasAddReq ||
+                                            {(data?.hasAddReq ||
                         data?.hasDeleteReq ||
                         data?.hasEditReq) && (
                         <div className="flex gap-1 h-[30px]">
@@ -620,18 +685,78 @@ export function ProfileDialog({
                   )}
                 </>
               )}
-              <Avatar
-                className={`${
-                  node?.gender === "male"
-                    ? "border-2 border-[#a4ecff] bg-[#fff8dc]"
-                    : "border-2 border-[#fdaed8] bg-[#f0ffff]"
-                } mb-1 mt-2 w-[120px] h-[120px] rounded-full overflow-hidden `}
-              >
-                <AvatarImage
-                  src={node?.photoURL || avatarIcon.src}
-                  alt={node?.name}
-                />
-              </Avatar>
+              <div className="flex items-center justify-center gap-4">
+                {(mode == "view" ||
+                  (mode === "review" && !node?.hasEditReq)) && (
+                  <Avatar
+                    className={`${
+                      node?.gender === "male"
+                        ? "border-2 border-[#a4ecff] bg-[#fff8dc]"
+                        : "border-2 border-[#fdaed8] bg-[#f0ffff]"
+                    } mb-1 mt-2 w-[120px] h-[120px] rounded-full overflow-hidden `}
+                  >
+                    <AvatarImage
+                      src={node?.photoURL || avatarIcon.src}
+                      alt={node?.name}
+                      className="h-full object-cover"
+                    />
+                  </Avatar>
+                )}
+                {mode == "review" && node?.hasEditReq && (
+                  <div className="flex gap-2 justify-center items-center">
+                    {historyData?.photoURL === node?.photoURL ? (
+                      <Avatar
+                        className={`${
+                          node?.gender === "male"
+                            ? "border-2 border-[#a4ecff] bg-[#fff8dc]"
+                            : "border-2 border-[#fdaed8] bg-[#f0ffff]"
+                        } mb-1 mt-2 w-[120px] h-[120px] rounded-full overflow-hidden `}
+                      >
+                        <AvatarImage
+                          src={node?.photoURL || avatarIcon.src}
+                          alt={node?.name}
+                          className="h-full object-cover"
+                        />
+                      </Avatar>
+                    ) : (
+                      <>
+                        <div className="flex flex-col items-center">
+                          <span className="text-xs mb-1 text-gray-600">Avatar cũ</span>
+                          <Avatar
+                            className={`${
+                              node?.gender === "male"
+                                ? "border-2 border-[#a4ecff] bg-[#fff8dc]"
+                                : "border-2 border-[#fdaed8] bg-[#f0ffff]"
+                            } w-[100px] h-[100px] rounded-full overflow-hidden border-2 border-gray-300`}
+                          >
+                            <AvatarImage
+                              src={historyData?.photoURL || avatarIcon.src}
+                              alt={node?.name}
+                              className="h-full object-cover"
+                            />
+                          </Avatar>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <span className="text-xs mb-1 text-orange-600 font-semibold">Avatar mới</span>
+                          <Avatar
+                            className={`${
+                              node?.gender === "male"
+                                ? "border-2 border-[#a4ecff] bg-[#fff8dc]"
+                                : "border-2 border-[#fdaed8] bg-[#f0ffff]"
+                            } w-[100px] h-[100px] rounded-full overflow-hidden border-2 border-orange-400`}
+                          >
+                            <AvatarImage
+                              src={node?.photoURL || avatarIcon.src}
+                              alt={node?.name}
+                              className="h-full object-cover"
+                            />
+                          </Avatar>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
 
               <div className="text-[20px] font-bold">{node?.name}</div>
               {(node?.birthday || node?.deathday) && (
@@ -1328,6 +1453,7 @@ export function ProfileDialog({
                   <AvatarImage
                     src={avatarPreview || data?.photoURL || avatarIcon.src}
                     alt={data?.name}
+                    className="h-full object-cover"
                   />
                 </Avatar>
                 
