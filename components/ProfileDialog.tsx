@@ -978,19 +978,19 @@ export function ProfileDialog({
                         variant="outline"
                         onClick={() => {
                           if (
-                            data?.burialLocation &&
+                            data?.burialLocationLink &&
                             /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
-                              data?.burialLocation
+                              data?.burialLocationLink
                             )
                           )
-                            window.open(data?.burialLocation, "_blank");
+                            window.open(data?.burialLocationLink, "_blank");
                         }}
                         className="h-[30px] w-[170px] col-span-3 font-bold px-2  rounded mr-2 border border-blue-500 text-blue-500"
                         disabled={
                           !(
-                            data?.burialLocation &&
+                            data?.burialLocationLink &&
                             /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
-                              data?.burialLocation
+                              data?.burialLocationLink
                             )
                           )
                         }
@@ -1025,25 +1025,25 @@ export function ProfileDialog({
                     )}
                     {mode == "review" && node?.hasEditReq && (
                       <div className="flex gap-1 justify-start">
-                        {historyData?.burialLocation ===
-                        node?.burialLocation ? (
+                        {historyData?.burialLocationLink ===
+                        node?.burialLocationLink ? (
                           <Button
                             variant="outline"
                             onClick={() => {
                               if (
-                                data?.burialLocation &&
+                                data?.burialLocationLink &&
                                 /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
-                                  data?.burialLocation
+                                  data?.burialLocationLink
                                 )
                               )
-                                window.open(data?.burialLocation, "_blank");
+                                window.open(data?.burialLocationLink, "_blank");
                             }}
                             className="h-[30px] w-[170px] col-span-3 font-bold px-2 rounded mr-2  border border-blue-500 text-blue-500"
                             disabled={
                               !(
-                                data?.burialLocation &&
+                                data?.burialLocationLink &&
                                 /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
-                                  data?.burialLocation
+                                  data?.burialLocationLink
                                 )
                               )
                             }
@@ -1086,22 +1086,22 @@ export function ProfileDialog({
                               variant="outline"
                               onClick={() => {
                                 if (
-                                  historyData?.burialLocation &&
+                                  historyData?.burialLocationLink &&
                                   /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
-                                    historyData?.burialLocation
+                                    historyData?.burialLocationLink
                                   )
                                 )
                                   window.open(
-                                    historyData?.burialLocation,
+                                    historyData?.burialLocationLink,
                                     "_blank"
                                   );
                               }}
                               className="h-[30px] w-[100px] col-span-3 font-bold px-2  rounded mr-2 border border-blue-500 text-blue-500"
                               disabled={
                                 !(
-                                  historyData?.burialLocation &&
+                                  historyData?.burialLocationLink &&
                                   /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
-                                    historyData?.burialLocation
+                                    historyData?.burialLocationLink
                                   )
                                 )
                               }
@@ -1142,19 +1142,19 @@ export function ProfileDialog({
                               variant="outline"
                               onClick={() => {
                                 if (
-                                  node?.burialLocation &&
+                                  node?.burialLocationLink &&
                                   /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
-                                    node?.burialLocation
+                                    node?.burialLocationLink
                                   )
                                 )
-                                  window.open(node?.burialLocation, "_blank");
+                                  window.open(node?.burialLocationLink, "_blank");
                               }}
                               className="h-[30px] w-[100px] col-span-3 font-bold px-2 rounded mr-2  border border-orange-400 text-orange-400"
                               disabled={
                                 !(
-                                  node?.burialLocation &&
+                                  node?.burialLocationLink &&
                                   /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
-                                    node?.burialLocation
+                                    node?.burialLocationLink
                                   )
                                 )
                               }
@@ -1546,34 +1546,35 @@ export function ProfileDialog({
                     />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="burialLocation" className="text-left">
+                    <Label htmlFor="burialLocationLink" className="text-left">
                       Vị trí mộ:
                     </Label>
                     <Input
-                      id="burialLocation"
-                      value={data?.burialLocation || ""}
+                      id="burialLocationLink"
+                      value={data?.burialLocationLink || ""}
                       className="col-span-3"
                       onChange={(e) => {
-                        setData({ ...data, burialLocation: e.target.value });
+                        setData({ ...data, burialLocationLink: e.target.value });
                       }}
                     />
+                   
                     <Button
                       variant="outline"
                       onClick={() => {
                         if (
-                          data?.burialLocation &&
+                          data?.burialLocationLink &&
                           /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
-                            data?.burialLocation
+                            data?.burialLocationLink
                           )
                         )
-                          window.open(data?.burialLocation, "_blank");
+                          window.open(data?.burialLocationLink, "_blank");
                       }}
                       className="w-[170px]  col-span-3 font-bold px-2  rounded mr-2 ml-[100px] border border-blue-500 text-blue-500"
                       disabled={
                         !(
-                          data?.burialLocation &&
+                          data?.burialLocationLink &&
                           /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
-                            data?.burialLocation
+                            data?.burialLocationLink
                           )
                         )
                       }
@@ -1605,6 +1606,20 @@ export function ProfileDialog({
                       </svg>
                       Xem trên bản đồ
                     </Button>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="burialLocation" className="text-left">
+                      Toạ độ mộ:
+                    </Label>
+                    <Input
+                      id="burialLocation"
+                      value={data?.burialLocation || ""}
+                      className="col-span-3"
+                      onChange={(e) => {
+                        setData({ ...data, burialLocation: e.target.value });
+                      }}
+                      placeholder="VD: 10.7867, 106.6956"
+                    />
                   </div>
                 </>
               )}

@@ -24,6 +24,7 @@ export interface NodeItem extends ExtNode {
   editUser?: string;
   deleteId?: string;
   burialLocation?: string;
+  burialLocationLink?: string;
 }
 
 export interface NavItem {

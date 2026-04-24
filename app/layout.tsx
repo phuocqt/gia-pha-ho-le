@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import Header from "../components/ui/header";
 import { Toaster } from "@/components/ui/toaster";
+import { APIProvider } from "@vis.gl/react-google-maps";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -30,9 +31,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen w-screen`}
       >
-        <Toaster />
-        <Header />
-        {children}
+        <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ""}>
+          <Toaster />
+          <Header />
+          {children}
+        </APIProvider>
       </body>
     </html>
   );
