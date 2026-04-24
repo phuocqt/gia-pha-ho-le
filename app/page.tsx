@@ -19,6 +19,7 @@ export default function App() {
   const [nodes, setNodes] = useState<NodeItem[]>(
     SOURCES[sourceKey] as unknown as NodeItem[]
   );
+  const [initialLoading, setInitialLoading] = useState<boolean>(true);
 
   const firstNodeId = useMemo(() => nodes[0]?.id, [nodes]);
   const [rootId, setRootId] = useState(firstNodeId);
@@ -32,9 +33,14 @@ export default function App() {
   );
 
   const getData = async () => {
-    const data = await getAllData("data");
-    console.log("data", data);
-    setNodes(data as unknown as NodeItem[]);
+    try {
+      const data = await getAllData("data");
+      setNodes(data as unknown as NodeItem[]);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setInitialLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -44,27 +50,34 @@ export default function App() {
 
   return (
     <div className={css.root}>
-      {nodes?.length > 0 && (
-        <PinchZoomPan min={0.3} max={5} captureWheel className={css.wrapper}>
-          <ReactFamilyTree
-            nodes={nodes}
-            rootId={rootId}
-            width={NODE_WIDTH}
-            height={NODE_HEIGHT}
-            className={css.tree}
-            renderNode={(node: Readonly<NodeItem>) => (
-              <FamilyNode
-                key={node.id}
-                node={node}
-                isRoot={node.id === rootId}
-                isHover={node.id === hoverId}
-                onClick={setSelectId}
-                onSubClick={setRootId}
-                style={getNodeStyle(node)}
-              />
-            )}
-          />
-        </PinchZoomPan>
+      {initialLoading ? (
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Đang tải dữ liệu...</p>
+          </div>
+        </div>
+      ) : (
+          <PinchZoomPan min={0.3} max={5} captureWheel className={css.wrapper}>
+            <ReactFamilyTree
+              nodes={nodes}
+              rootId={rootId}
+              width={NODE_WIDTH}
+              height={NODE_HEIGHT}
+              className={css.tree}
+              renderNode={(node: Readonly<NodeItem>) => (
+                <FamilyNode
+                  key={node.id}
+                  node={node}
+                  isRoot={node.id === rootId}
+                  isHover={node.id === hoverId}
+                  onClick={setSelectId}
+                  onSubClick={setRootId}
+                  style={getNodeStyle(node)}
+                />
+              )}
+            />
+          </PinchZoomPan>
       )}
 
       <ProfileDialog

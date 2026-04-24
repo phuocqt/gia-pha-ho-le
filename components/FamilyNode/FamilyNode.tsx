@@ -32,11 +32,8 @@ export const FamilyNode = React.memo(function FamilyNode({
     if (node?.userId && userId && node?.userId === userId) return "blue-500";
   };
   const borderColor = getBorderColor();
-  console.log("color", borderColor, userId, node?.userId);
 
   useEffect(() => {
-    console.log("herre", loggedInUser?.uid);
-
     if (loggedInUser?.uid) setUserId(loggedInUser?.uid || "");
   }, [loggedInUser?.uid]);
 
