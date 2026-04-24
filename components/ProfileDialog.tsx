@@ -240,16 +240,16 @@ export function ProfileDialog({
   useEffect(() => {
     if (!!node && open) {
       setData({ ...node });
-      // Chì set mode khi mode hien tai la "view" de tranh xung dot
-      if (mode === "view") {
-        setMode("view");
-      }
+      // Luôn reset mode về "view" khi mở dialog để tránh mode cũ còn sót lại
+      setMode("view");
     }
     
     // Reset avatar state when closing dialog
     if (!open) {
       setSelectedAvatar(null);
       setAvatarPreview("");
+      // Reset mode về "view" khi đóng dialog để chuẩn bị cho lần mở tiếp theo
+      setMode("view");
     }
   }, [node, open]);
   const userRole = getUser()?.role || "user";
