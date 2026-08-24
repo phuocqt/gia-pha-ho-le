@@ -44,7 +44,11 @@ export const FamilyNode = React.memo(function FamilyNode({
   }, [loggedInUser?.uid]);
 
   return (
-    <div className={`absolute flex p-2.5`} style={style}>
+    <div
+      className={`absolute flex p-2.5`}
+      data-family-node-id={node.id}
+      style={style}
+    >
       <div
         className={`relative flex flex-1 flex-col items-center justify-start rounded-md  cursor-pointer ${
           node.gender === "male"

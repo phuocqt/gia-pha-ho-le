@@ -5,10 +5,10 @@ import { ProfileDialog } from "@/components/ProfileDialog";
 import { NodeItem } from "@/type";
 import { getNodeStyle } from "@/utils";
 import { Search, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ReactFamilyTree from "react-family-tree";
 import css from "../App.module.css";
-import { PinchZoomPan } from "../PinchZoomPan/PinchZoomPan";
+import { PinchZoomPan, PinchZoomPanRef } from "../PinchZoomPan/PinchZoomPan";
 import { FamilyNode } from "../components/FamilyNode/FamilyNode";
 import { NODE_HEIGHT, NODE_WIDTH, SOURCES } from "../constants/const";
 import { useRouter } from "next/navigation";
@@ -28,6 +28,7 @@ const normalizeName = (value?: string) =>
 
 export default function App() {
   const router = useRouter();
+  const treeRef = useRef<PinchZoomPanRef>(null);
 
   const [nodes, setNodes] = useState<NodeItem[]>(
     SOURCES[sourceKey] as unknown as NodeItem[]
@@ -65,10 +66,12 @@ export default function App() {
   };
 
   const handleSelectSearchResult = (node: NodeItem) => {
-    setRootId(node.id);
     setFocusedId(node.id);
     setSearchValue(node.name || "");
     setShowSearchResults(false);
+    requestAnimationFrame(() => {
+      treeRef.current?.focusElement(`[data-family-node-id="${node.id}"]`);
+    });
   };
 
   const handleClearSearch = () => {
@@ -155,7 +158,13 @@ export default function App() {
               </div>
             )}
           </div>
-          <PinchZoomPan min={0.3} max={5} captureWheel className={css.wrapper}>
+          <PinchZoomPan
+            ref={treeRef}
+            min={0.3}
+            max={5}
+            captureWheel
+            className={css.wrapper}
+          >
             <ReactFamilyTree
               nodes={nodes}
               rootId={rootId}
