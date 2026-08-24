@@ -24,7 +24,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, storage } from "@/config/firebase";
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
 import imageCompression from "browser-image-compression";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
@@ -104,7 +109,7 @@ export function ProfileDialog({
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.type.startsWith('image/')) {
+      if (file.type.startsWith("image/")) {
         setSelectedAvatar(file);
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -114,7 +119,7 @@ export function ProfileDialog({
       } else {
         toast({
           title: "Vui lòng chọn file ảnh",
-          variant: "destructive"
+          variant: "destructive",
         });
       }
     }
@@ -122,23 +127,23 @@ export function ProfileDialog({
 
   const deleteOldAvatar = async (photoURL: string): Promise<void> => {
     if (!photoURL || photoURL === avatarIcon.src) return;
-    
+
     try {
       // Extract file path from URL
       // URL format: https://firebasestorage.googleapis.com/v0/b/bucket/o/path%2Ffilename?token=...
       const url = new URL(photoURL);
       const pathMatch = url.pathname.match(/\/o\/(.+)(\?|$)/);
-      
+
       if (pathMatch) {
         const filePath = decodeURIComponent(pathMatch[1]);
         const oldAvatarRef = ref(storage, filePath);
-        
-        console.log('Deleting old avatar:', filePath);
+
+        console.log("Deleting old avatar:", filePath);
         await deleteObject(oldAvatarRef);
-        console.log('Old avatar deleted successfully');
+        console.log("Old avatar deleted successfully");
       }
     } catch (error) {
-      console.error('Error deleting old avatar:', error);
+      console.error("Error deleting old avatar:", error);
       // Không hiem thoi loi cho user vi van upload anh moi thanh cong
     }
   };
@@ -155,14 +160,19 @@ export function ProfileDialog({
             deletedPhotoURL: data.photoURL, // Lưu URL avatar cần xoá
             editUser: loggedInUser?.uid,
           };
-          
+
           // Lưu vào historyData collection
           editData("historyData", node?.id || "", historyDataWithAvatarDelete);
-          
+
           // Cập nhật node với yêu cầu xoá avatar
           editNodeByUserRole(
             node?.id || "",
-            { ...data, photoURL: "", hasEditReq: true, editUser: loggedInUser?.uid } as NodeItem,
+            {
+              ...data,
+              photoURL: "",
+              hasEditReq: true,
+              editUser: loggedInUser?.uid,
+            } as NodeItem,
             (type) => {
               if (type === "error")
                 toast({
@@ -173,63 +183,70 @@ export function ProfileDialog({
                   title: "Yêu cầu xoá avatar đã được gửi, đang đợi xét duyệt",
                 });
               onClose?.("success");
-            }
+            },
           );
-        }
+        },
       });
     }
   };
 
-  
   const uploadAvatar = async (): Promise<string | null> => {
     if (!selectedAvatar) return null;
-    
+
     setUploadingAvatar(true);
     try {
-      console.log('Starting avatar upload...');
-      console.log('Original file size:', selectedAvatar.size, 'bytes');
-      
+      console.log("Starting avatar upload...");
+      console.log("Original file size:", selectedAvatar.size, "bytes");
+
       // Nén ảnh xuống dưới 30KB
       const compressedFile = await imageCompression(selectedAvatar, {
         maxSizeMB: 0.03, // 30KB = 0.03MB
         maxWidthOrHeight: 800,
         useWebWorker: true,
-        fileType: 'image/jpeg',
+        fileType: "image/jpeg",
       });
-      
-      console.log('Compressed file size:', compressedFile.size, 'bytes');
-      console.log('Compression ratio:', ((selectedAvatar.size - compressedFile.size) / selectedAvatar.size * 100).toFixed(2) + '%');
-      
+
+      console.log("Compressed file size:", compressedFile.size, "bytes");
+      console.log(
+        "Compression ratio:",
+        (
+          ((selectedAvatar.size - compressedFile.size) / selectedAvatar.size) *
+          100
+        ).toFixed(2) + "%",
+      );
+
       const avatarRef = ref(storage, `avatars/${uuidv4()}`);
-      console.log('Storage ref created:', avatarRef);
-      
+      console.log("Storage ref created:", avatarRef);
+
       await uploadBytes(avatarRef, compressedFile);
-      console.log('Upload bytes completed');
-      
+      console.log("Upload bytes completed");
+
       const downloadURL = await getDownloadURL(avatarRef);
-      console.log('Download URL obtained:', downloadURL);
-      
+      console.log("Download URL obtained:", downloadURL);
+
       return downloadURL;
     } catch (error) {
-      console.error('Error uploading avatar:', error);
-      
+      console.error("Error uploading avatar:", error);
+
       // Hiển thị lỗi chi tiết hơn
       let errorMessage = "Lỗi khi tải ảnh lên";
       if (error instanceof Error) {
-        if (error.message.includes('CORS')) {
-          errorMessage = "Lỗi CORS - Vui lòng kiểm tra cấu hình Firebase Storage";
-        } else if (error.message.includes('unauthorized')) {
-          errorMessage = "Lỗi phân quyền - Vui lòng kiểm tra quy truy cập Storage";
-        } else if (error.message.includes('network')) {
+        if (error.message.includes("CORS")) {
+          errorMessage =
+            "Lỗi CORS - Vui lòng kiểm tra cấu hình Firebase Storage";
+        } else if (error.message.includes("unauthorized")) {
+          errorMessage =
+            "Lỗi phân quyền - Vui lòng kiểm tra quy truy cập Storage";
+        } else if (error.message.includes("network")) {
           errorMessage = "Lỗi mạng - Vui lòng kiểm tra kết nối";
         } else {
           errorMessage = `Lỗi khi tải ảnh lên: ${error.message}`;
         }
       }
-      
+
       toast({
         title: errorMessage,
-        variant: "destructive"
+        variant: "destructive",
       });
       return null;
     } finally {
@@ -243,7 +260,7 @@ export function ProfileDialog({
       // Luôn reset mode về "view" khi mở dialog để tránh mode cũ còn sót lại
       setMode("view");
     }
-    
+
     // Reset avatar state when closing dialog
     if (!open) {
       setSelectedAvatar(null);
@@ -294,11 +311,12 @@ export function ProfileDialog({
             photoURL: "",
           });
         }
-        
+
         // Kiểm tra nếu profile đã có avatar
         if (data?.photoURL && data.photoURL !== avatarIcon.src) {
           setOpenAlert({
-            messenger: "Profile này đã có avatar. Bạn có muốn thay thế bằng avatar từ Google không?",
+            messenger:
+              "Profile này đã có avatar. Bạn có muốn thay thế bằng avatar từ Google không?",
             onConfirm: async () => {
               editData("data", node?.id || "", {
                 userId: loggedInUser?.uid,
@@ -312,7 +330,7 @@ export function ProfileDialog({
               toast({
                 title: "Đã cập nhật avatar thành công",
               });
-            }
+            },
           });
         } else {
           // Profile chưa có avatar, cập nhật bình thường
@@ -343,7 +361,7 @@ export function ProfileDialog({
     if (mode === "edit") {
       let avatarUrl = data?.photoURL;
       let newAvatarUrl = "";
-      
+
       // Chi upload khi co avatar moi
       if (selectedAvatar) {
         const uploadedUrl = await uploadAvatar();
@@ -354,7 +372,7 @@ export function ProfileDialog({
         newAvatarUrl = uploadedUrl;
         avatarUrl = uploadedUrl;
       }
-      
+
       // Lưu dữ liệu cũ vào historyData để admin có thể khôi phục
       if (selectedAvatar && newAvatarUrl) {
         // Lưu cả avatar cũ và mới vào history để xử lý sau khi duyệt
@@ -364,14 +382,18 @@ export function ProfileDialog({
           newPhotoURL: newAvatarUrl, // Lưu avatar mới
           oldPhotoURL: data?.photoURL, // Lưu avatar cũ để xoá sau khi duyệt
         };
-        
+
         // Lưu vào historyData collection
         editData("historyData", node?.id || "", historyDataWithAvatar);
       }
-      
+
       editNodeByUserRole(
         node?.id || "",
-        { ...data, photoURL: avatarUrl, editUser: loggedInUser?.uid } as NodeItem,
+        {
+          ...data,
+          photoURL: avatarUrl,
+          editUser: loggedInUser?.uid,
+        } as NodeItem,
         (type) => {
           if (type === "error")
             toast({
@@ -382,7 +404,7 @@ export function ProfileDialog({
               title: "Da cap nhat thanh cong",
             });
           onClose?.("success");
-        }
+        },
       );
     }
     if (mode === "addChild") {
@@ -390,9 +412,9 @@ export function ProfileDialog({
       const otherParent = data?.otherParentId
         ? { id: data?.otherParentId, type: "blood" }
         : (node?.spouses?.length || 0) > 0
-        ? { id: node?.spouses?.[0].id, type: "blood" }
-        : {};
-      
+          ? { id: node?.spouses?.[0].id, type: "blood" }
+          : {};
+
       let avatarUrl = data?.photoURL;
       if (selectedAvatar) {
         const uploadedUrl = await uploadAvatar();
@@ -402,7 +424,7 @@ export function ProfileDialog({
         }
         avatarUrl = uploadedUrl;
       }
-      
+
       const tempData = {
         ...data,
         id: newId,
@@ -518,17 +540,20 @@ export function ProfileDialog({
         hasEditReq: false,
       });
       setData({ ...data, hasEditReq: false });
-      
+
       // Xoá avatar cũ nếu có thay đổi avatar
       if (historyData?.newPhotoURL && historyData?.oldPhotoURL) {
         deleteOldAvatar(historyData.oldPhotoURL);
       }
-      
+
       // Xoá avatar nếu có yêu cầu xoá avatar (trong hasEditReq)
-      if (historyData?.deletedPhotoURL && historyData?.deletedPhotoURL !== historyData?.photoURL) {
+      if (
+        historyData?.deletedPhotoURL &&
+        historyData?.deletedPhotoURL !== historyData?.photoURL
+      ) {
         deleteOldAvatar(historyData.deletedPhotoURL);
       }
-      
+
       deleteItem("historyData", node?.id || "");
       setHistoryData(undefined);
       setMode("view");
@@ -564,28 +589,34 @@ export function ProfileDialog({
         hasEditReq: false,
         ...historyData,
       });
-      setData({ 
-        ...historyData, 
+      setData({
+        ...historyData,
         hasEditReq: false,
         children: historyData?.children || [],
         siblings: historyData?.siblings || [],
         spouses: historyData?.spouses || [],
-        parents: historyData?.parents || []
+        parents: historyData?.parents || [],
       });
-      
+
       // Xoá avatar mới nếu có thay đổi avatar
-      if (historyData?.newPhotoURL && historyData?.newPhotoURL !== historyData?.photoURL) {
+      if (
+        historyData?.newPhotoURL &&
+        historyData?.newPhotoURL !== historyData?.photoURL
+      ) {
         deleteOldAvatar(historyData.newPhotoURL);
       }
-      
+
       // Khôi phục avatar nếu có yêu cầu xoá avatar (giữ lại avatar)
-      if (historyData?.deletedPhotoURL && historyData?.deletedPhotoURL !== historyData?.photoURL) {
+      if (
+        historyData?.deletedPhotoURL &&
+        historyData?.deletedPhotoURL !== historyData?.photoURL
+      ) {
         // Cập nhật lại node để giữ avatar
         editData("data", node?.id || "", {
-          photoURL: historyData.deletedPhotoURL
+          photoURL: historyData.deletedPhotoURL,
         });
       }
-      
+
       deleteItem("historyData", node?.id || "");
       setHistoryData(undefined);
       setMode("view");
@@ -632,10 +663,10 @@ export function ProfileDialog({
                       {data?.hasAddReq
                         ? "Đã được thêm mới, đang đợi xét duyệt yêu cầu"
                         : data?.hasDeleteReq
-                        ? "Đã có yêu cầu xoá, đang đợi được xét duyệt"
-                        : data?.hasEditReq
-                        ? "đã có yêu cầu chỉnh sửa, đang đợi xét duyệt"
-                        : ""}
+                          ? "Đã có yêu cầu xoá, đang đợi được xét duyệt"
+                          : data?.hasEditReq
+                            ? "đã có yêu cầu chỉnh sửa, đang đợi xét duyệt"
+                            : ""}
                     </div>
                   ) : (
                     <>
@@ -670,7 +701,7 @@ export function ProfileDialog({
                             : "Đang duyệt chỉnh sửa"}
                         </Button>
                       )}
-                                            {(data?.hasAddReq ||
+                      {(data?.hasAddReq ||
                         data?.hasDeleteReq ||
                         data?.hasEditReq) && (
                         <div className="flex gap-1 h-[30px]">
@@ -721,7 +752,9 @@ export function ProfileDialog({
                     ) : (
                       <>
                         <div className="flex flex-col items-center">
-                          <span className="text-xs mb-1 text-gray-600">Avatar cũ</span>
+                          <span className="text-xs mb-1 text-gray-600">
+                            Avatar cũ
+                          </span>
                           <Avatar
                             className={`${
                               node?.gender === "male"
@@ -737,7 +770,9 @@ export function ProfileDialog({
                           </Avatar>
                         </div>
                         <div className="flex flex-col items-center">
-                          <span className="text-xs mb-1 text-orange-600 font-semibold">Avatar mới</span>
+                          <span className="text-xs mb-1 text-orange-600 font-semibold">
+                            Avatar mới
+                          </span>
                           <Avatar
                             className={`${
                               node?.gender === "male"
@@ -1105,17 +1140,17 @@ export function ProfileDialog({
                           if (
                             data?.burialLocation &&
                             /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
-                              data?.burialLocation
+                              data?.burialLocation,
                             )
                           )
                             window.open(data?.burialLocation, "_blank");
                         }}
-                        className="h-[30px] w-[170px] col-span-3 font-bold px-2  rounded mr-2 border border-blue-500 text-blue-500"
+                        className="h-[30px] w-[230px] col-span-3 font-bold px-2  rounded mr-2 border border-blue-500 text-blue-500"
                         disabled={
                           !(
                             data?.burialLocation &&
                             /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
-                              data?.burialLocation
+                              data?.burialLocation,
                             )
                           )
                         }
@@ -1145,7 +1180,7 @@ export function ProfileDialog({
                             </g>
                           </g>
                         </svg>
-                        Xem trên bản đồ
+                        Xem Vị trí mộ trên bản đồ
                       </Button>
                     )}
                     {mode == "review" && node?.hasEditReq && (
@@ -1158,7 +1193,7 @@ export function ProfileDialog({
                               if (
                                 data?.burialLocation &&
                                 /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
-                                  data?.burialLocation
+                                  data?.burialLocation,
                                 )
                               )
                                 window.open(data?.burialLocation, "_blank");
@@ -1168,7 +1203,7 @@ export function ProfileDialog({
                               !(
                                 data?.burialLocation &&
                                 /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
-                                  data?.burialLocation
+                                  data?.burialLocation,
                                 )
                               )
                             }
@@ -1213,12 +1248,12 @@ export function ProfileDialog({
                                 if (
                                   historyData?.burialLocation &&
                                   /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
-                                    historyData?.burialLocation
+                                    historyData?.burialLocation,
                                   )
                                 )
                                   window.open(
                                     historyData?.burialLocation,
-                                    "_blank"
+                                    "_blank",
                                   );
                               }}
                               className="h-[30px] w-[100px] col-span-3 font-bold px-2  rounded mr-2 border border-blue-500 text-blue-500"
@@ -1226,7 +1261,7 @@ export function ProfileDialog({
                                 !(
                                   historyData?.burialLocation &&
                                   /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
-                                    historyData?.burialLocation
+                                    historyData?.burialLocation,
                                   )
                                 )
                               }
@@ -1269,7 +1304,7 @@ export function ProfileDialog({
                                 if (
                                   node?.burialLocation &&
                                   /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
-                                    node?.burialLocation
+                                    node?.burialLocation,
                                   )
                                 )
                                   window.open(node?.burialLocation, "_blank");
@@ -1279,7 +1314,7 @@ export function ProfileDialog({
                                 !(
                                   node?.burialLocation &&
                                   /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
-                                    node?.burialLocation
+                                    node?.burialLocation,
                                   )
                                 )
                               }
@@ -1377,7 +1412,7 @@ export function ProfileDialog({
                   </div>
                 )}
               </div>
-              <div className="flex items-center ">
+              <div className={node?.isAlive ? "flex items-center " : "hidden"}>
                 <Label
                   htmlFor="name"
                   className="text-left w-[120px] font-[600] text-[16px]"
@@ -1437,8 +1472,8 @@ export function ProfileDialog({
                 {mode === "edit"
                   ? "CHỈNH SỬA SAU ĐÓ BẤM LƯU"
                   : mode === "addChild"
-                  ? "THÊM CON"
-                  : "THÊM VỢ/CHỒNG"}
+                    ? "THÊM CON"
+                    : "THÊM VỢ/CHỒNG"}
               </DialogTitle>
             </DialogHeader>
             <div className="flex justify-center">
@@ -1456,7 +1491,7 @@ export function ProfileDialog({
                     className="h-full object-cover"
                   />
                 </Avatar>
-                
+
                 {/* Nút upload ảnh mới */}
                 <Button
                   type="button"
@@ -1469,12 +1504,22 @@ export function ProfileDialog({
                   {uploadingAvatar ? (
                     <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                   ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 2v20M17 7l-5-5-5 5"/>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M12 2v20M17 7l-5-5-5 5" />
                     </svg>
                   )}
                 </Button>
-                
+
                 {/* Nút xoá avatar hiện tại */}
                 {data?.photoURL && data.photoURL !== avatarIcon.src && (
                   <Button
@@ -1485,12 +1530,22 @@ export function ProfileDialog({
                     onClick={handleDeleteAvatar}
                     title="Xoá avatar"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 6L6 18M6 6l12 12"/>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M18 6L6 18M6 6l12 12" />
                     </svg>
                   </Button>
                 )}
-                
+
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -1591,7 +1646,7 @@ export function ProfileDialog({
                           <SelectValue
                             placeholder={
                               spousesNode.find(
-                                (item) => item.id === data?.otherParentId
+                                (item) => item.id === data?.otherParentId,
                               )?.name
                             }
                           />
@@ -1685,16 +1740,27 @@ export function ProfileDialog({
                       }}
                     />
                     <div className="col-span-3 col-start-2 -mt-2 text-xs leading-5 text-gray-500">
-                      Mở Google Maps, chọn đúng vị trí mộ, bấm Chia sẻ, sao
-                      chép đường liên kết rồi dán URL vào ô này.
+                      Mở Google Maps, chọn đúng vị trí mộ, bấm Chia sẻ, sao chép
+                      đường liên kết rồi dán URL vào ô này.
                     </div>
                     <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        window.open("https://www.google.com/maps", "_blank");
+                      }}
+                      className="w-[170px] col-span-3 font-bold px-2 rounded mr-2 ml-[100px] border border-green-600 text-green-600"
+                    >
+                      Mở Google Maps
+                    </Button>
+                    <Button
+                      type="button"
                       variant="outline"
                       onClick={() => {
                         if (
                           data?.burialLocation &&
                           /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
-                            data?.burialLocation
+                            data?.burialLocation,
                           )
                         )
                           window.open(data?.burialLocation, "_blank");
@@ -1704,7 +1770,7 @@ export function ProfileDialog({
                         !(
                           data?.burialLocation &&
                           /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?$/.test(
-                            data?.burialLocation
+                            data?.burialLocation,
                           )
                         )
                       }
@@ -1769,20 +1835,22 @@ export function ProfileDialog({
                   }}
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="phoneNum" className="text-left">
+              {data?.isAlive && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="phoneNum" className="text-left">
                   Số điện thoại:
                 </Label>
 
-                <Input
-                  id="phoneNum"
-                  value={data?.phoneNum || ""}
-                  className="col-span-3"
-                  onChange={(e) => {
-                    setData({ ...data, phoneNum: e.target.value });
-                  }}
-                />
-              </div>
+                  <Input
+                    id="phoneNum"
+                    value={data?.phoneNum || ""}
+                    className="col-span-3"
+                    onChange={(e) => {
+                      setData({ ...data, phoneNum: e.target.value });
+                    }}
+                  />
+                </div>
+              )}
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="note" className="text-left">
                   Ghi chú
