@@ -397,11 +397,11 @@ export function ProfileDialog({
         (type) => {
           if (type === "error")
             toast({
-              title: "Da co loi, vui long thu lai",
+              title: "Đã có lỗi, vui lòng thử lại",
             });
           if (type === "success")
             toast({
-              title: "Da cap nhat thanh cong",
+              title: "Đã câp nhật thành công",
             });
           onClose?.("success");
         },
@@ -1838,8 +1838,8 @@ export function ProfileDialog({
               {data?.isAlive && (
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="phoneNum" className="text-left">
-                  Số điện thoại:
-                </Label>
+                    Số điện thoại:
+                  </Label>
 
                   <Input
                     id="phoneNum"
