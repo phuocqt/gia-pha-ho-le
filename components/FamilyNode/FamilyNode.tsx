@@ -10,6 +10,7 @@ import { useSearchParams } from "next/navigation";
 interface FamilyNodeProps {
   node: NodeItem;
   isRoot: boolean;
+  isFocused?: boolean;
   isHover?: boolean;
   onClick: (id: string) => void;
   onSubClick: (id: string) => void;
@@ -18,6 +19,7 @@ interface FamilyNodeProps {
 
 export const FamilyNode = React.memo(function FamilyNode({
   node,
+  isFocused,
   onClick,
   style,
 }: FamilyNodeProps) {
@@ -26,12 +28,16 @@ export const FamilyNode = React.memo(function FamilyNode({
   const [loggedInUser] = useAuthState(auth);
   const searchParams = useSearchParams();
   const deleteId = searchParams.get("deleteId");
-  const getBorderColor = () => {
-    if (deleteId === node?.id) return "[#f04c4c]";
-    if (deleteId === node?.deleteId) return "lime-300";
-    if (node?.userId && userId && node?.userId === userId) return "blue-500";
+  const getBorderClass = () => {
+    if (isFocused) return "border-2 border-red-500";
+    if (deleteId === node?.id) return "border-2 border-[#f04c4c]";
+    if (deleteId === node?.deleteId) return "border-2 border-lime-300";
+    if (node?.userId && userId && node?.userId === userId) {
+      return "border-2 border-blue-500";
+    }
+    return "border border-transparent";
   };
-  const borderColor = getBorderColor();
+  const borderClass = getBorderClass();
 
   useEffect(() => {
     if (loggedInUser?.uid) setUserId(loggedInUser?.uid || "");
@@ -42,9 +48,9 @@ export const FamilyNode = React.memo(function FamilyNode({
       <div
         className={`relative flex flex-1 flex-col items-center justify-start rounded-md  cursor-pointer ${
           node.gender === "male"
-            ? "border  bg-[#fff8dc]"
-            : "border  bg-[#f0ffff]"
-        } border-${borderColor}`}
+            ? "bg-[#fff8dc]"
+            : "bg-[#f0ffff]"
+        } ${borderClass}`}
         onClick={clickHandler}
       >
         <Avatar
