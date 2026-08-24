@@ -1679,10 +1679,15 @@ export function ProfileDialog({
                       id="burialLocation"
                       value={data?.burialLocation || ""}
                       className="col-span-3"
+                      placeholder="Dán URL Google Maps của vị trí mộ"
                       onChange={(e) => {
                         setData({ ...data, burialLocation: e.target.value });
                       }}
                     />
+                    <div className="col-span-3 col-start-2 -mt-2 text-xs leading-5 text-gray-500">
+                      Mở Google Maps, chọn đúng vị trí mộ, bấm Chia sẻ, sao
+                      chép đường liên kết rồi dán URL vào ô này.
+                    </div>
                     <Button
                       variant="outline"
                       onClick={() => {
