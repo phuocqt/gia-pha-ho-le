@@ -243,19 +243,41 @@ class actionStore {
     }
   }
 
-  async deleteAllDataFromFirestore() {
+  async deleteAllDataFromCollection(collectionName: string) {
     try {
-      const dataCollection = collection(db, "data");
+      const dataCollection = collection(db, collectionName);
       const querySnapshot = await getDocs(dataCollection);
 
       const deletePromises = querySnapshot.docs.map((document) => {
-        return deleteDoc(doc(db, "data", document.id));
+        return deleteDoc(doc(db, collectionName, document.id));
       });
 
       await Promise.all(deletePromises);
-      console.log("all data in collection was deleted.");
+      console.log(`all data in collection ${collectionName} was deleted.`);
+    } catch (error) {
+      console.error(`error when delete all data from ${collectionName}:`, error);
+      throw error;
+    }
+  }
+
+  async deleteAllDataFromFirestore() {
+    try {
+      await this.deleteAllDataFromCollection("data");
     } catch (error) {
       console.error("error when delete all data:", error);
+      throw error;
+    }
+  }
+
+  async deleteAllDataAndHistoryFromFirestore() {
+    try {
+      await Promise.all([
+        this.deleteAllDataFromCollection("data"),
+        this.deleteAllDataFromCollection("historyData"),
+      ]);
+    } catch (error) {
+      console.error("error when delete all data and history data:", error);
+      throw error;
     }
   }
 
@@ -339,7 +361,7 @@ class actionStore {
 
   async runFakeData(dataArray: NodeItem[]) {
     try {
-      await this.deleteAllDataFromFirestore();
+      await this.deleteAllDataAndHistoryFromFirestore();
       const dataCollection = collection(db, "data");
 
       const savePromises = dataArray.map(async (item) => {
@@ -417,6 +439,9 @@ export const deleteMultipleDocs = (ids: string[], callback?: () => void) =>
 
 export const deleteAllDataFromFirestore = () =>
   actions().deleteAllDataFromFirestore();
+
+export const deleteAllDataAndHistoryFromFirestore = () =>
+  actions().deleteAllDataAndHistoryFromFirestore();
 
 export const runFakeData = (dataArray: NodeItem[]) =>
   actions().runFakeData(dataArray);

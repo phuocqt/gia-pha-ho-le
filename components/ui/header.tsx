@@ -98,6 +98,13 @@ export default function Header() {
               </Button>
             </div>
           )}
+          {loggedInUser && userRole === "supperAdmin" && (
+            <div className="mr-3">
+              <Button>
+                <Link href="/data-management">Data</Link>
+              </Button>
+            </div>
+          )}
         </div>
         {!isLogged ? (
           <div className="mr-3">
