@@ -51,9 +51,7 @@ export const FamilyNode = React.memo(function FamilyNode({
     >
       <div
         className={`relative flex flex-1 flex-col items-center justify-start rounded-md  cursor-pointer ${
-          node.gender === "male"
-            ? "bg-[#fff8dc]"
-            : "bg-[#f0ffff]"
+          node.gender === "male" ? "bg-[#fff8dc]" : "bg-[#f0ffff]"
         } ${borderClass}`}
         onClick={clickHandler}
       >
@@ -64,12 +62,15 @@ export const FamilyNode = React.memo(function FamilyNode({
               : "border-2 border-[#fdaed8] bg-[#f0ffff]"
           } mb-1 w-[20px] h-[20px] rounded-full overflow-hidden`}
         >
-          <AvatarImage className="object-cover h-full w-full" src={node?.photoURL || userIcon.src} alt={node.name} />
+          <AvatarImage
+            className="object-cover h-full w-full"
+            src={node?.photoURL || userIcon.src}
+            alt={node.name}
+          />
         </Avatar>
         <div className="text-[7px] leading-[2] text-black">{node.name}</div>
         <div className="text-[5px] leading-[1] text-black">
-          {node?.birthday || "-"} -{" "}
-          {node?.isAlive ? "nay" : node?.deathday || "-"}
+          {node?.birthday || "-"} - {node?.deathday || "-"}
         </div>
       </div>
       {node.hasDeleteReq && (

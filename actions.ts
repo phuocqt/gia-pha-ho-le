@@ -50,16 +50,19 @@ class actionStore {
     }
   }
 
-  async addData(data: NodeItem, callback: (type: "error" | "success") => void) {
+  async addData(
+    data: NodeItem,
+    callback?: (type: "error" | "success") => void,
+  ) {
     try {
       await setDoc(doc(db, "data", data.id), {
         ...data,
         hasAddReq: this.loggedUser?.role === "user" ? true : false,
       });
-      callback("success");
+      callback?.("success");
     } catch (error) {
       console.log("ERROR", error);
-      callback("error");
+      callback?.("error");
     }
   }
 
@@ -67,7 +70,7 @@ class actionStore {
     collection: string,
     id: string,
     data: any,
-    callback?: (type: "error" | "success") => void
+    callback?: (type: "error" | "success") => void,
   ) {
     try {
       await setDoc(
@@ -76,7 +79,7 @@ class actionStore {
           ...data,
           editUser: this.loggedUser?.name || this.loggedUser?.id,
         },
-        { merge: true }
+        { merge: true },
       );
       callback?.("success");
     } catch (error) {
@@ -89,7 +92,7 @@ class actionStore {
   async editNodeByUserRole(
     id: string,
     data: any,
-    callback?: (type: "error" | "success") => void
+    callback?: (type: "error" | "success") => void,
   ) {
     try {
       const itemData = await getDataById("data", id);
@@ -106,7 +109,7 @@ class actionStore {
             hasEditReq: false,
             editUser: this.loggedUser?.name || this.loggedUser?.id,
           },
-          { merge: true }
+          { merge: true },
         );
       } else {
         const historyData = await getDataById("data", id);
@@ -117,14 +120,14 @@ class actionStore {
             hasEditReq: true,
             editUser: this.loggedUser?.name || this.loggedUser?.id,
           },
-          { merge: true }
+          { merge: true },
         );
         await setDoc(
           doc(db, "historyData", id),
           {
             ...historyData,
           },
-          { merge: true }
+          { merge: true },
         );
       }
       console.log("edit data", data);
@@ -179,7 +182,7 @@ class actionStore {
   async deleteItem(
     collection: string,
     id: string,
-    callback?: () => void
+    callback?: () => void,
   ): Promise<void> {
     try {
       const itemData = await getDataById(collection, id);
@@ -199,7 +202,7 @@ class actionStore {
             hasDeleteReq: true,
             editUser: this.loggedUser?.name || this.loggedUser?.id,
           },
-          { merge: true }
+          { merge: true },
         );
       }
     } catch (error) {
@@ -255,7 +258,10 @@ class actionStore {
       await Promise.all(deletePromises);
       console.log(`all data in collection ${collectionName} was deleted.`);
     } catch (error) {
-      console.error(`error when delete all data from ${collectionName}:`, error);
+      console.error(
+        `error when delete all data from ${collectionName}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -311,7 +317,7 @@ class actionStore {
           const spousesNode = allNodeToObject[spouseNodeId];
           editData("data", spouseNodeId, {
             spouses: spousesNode?.spouses?.filter(
-              (item) => item?.id !== node?.id
+              (item) => item?.id !== node?.id,
             ),
           });
         }
@@ -320,7 +326,7 @@ class actionStore {
             const childNode = allNodeToObject[child.id];
             editData("data", child.id, {
               parents: childNode?.parents?.filter(
-                (item) => item?.id !== node?.id
+                (item) => item?.id !== node?.id,
               ),
             });
           });
@@ -398,7 +404,7 @@ export const generateQueryGetData = (collectionName: string) =>
   actions().generateQueryGetData(collectionName);
 
 export const transformData = (
-  snapshot: QuerySnapshot<DocumentData, DocumentData>
+  snapshot: QuerySnapshot<DocumentData, DocumentData>,
 ) => actions().transformData(snapshot);
 
 export const getAllData = (collectionName: string) =>
@@ -406,20 +412,20 @@ export const getAllData = (collectionName: string) =>
 
 export const addData = (
   data: NodeItem,
-  callback: (type: "error" | "success") => void
+  callback?: (type: "error" | "success") => void,
 ) => actions().addData(data, callback);
 
 export const editData = (
   collection: string,
   id: string,
   data: any,
-  callback?: (type: "error" | "success") => void
+  callback?: (type: "error" | "success") => void,
 ) => actions().editData(collection, id, data, callback);
 
 export const editNodeByUserRole = (
   id: string,
   data: any,
-  callback?: (type: "error" | "success") => void
+  callback?: (type: "error" | "success") => void,
 ) => actions().editNodeByUserRole(id, data, callback);
 
 export const getDataById = (collection: string, id: string) =>
@@ -431,7 +437,7 @@ export const getDataByField = (fieldName: string, fieldValue: any) =>
 export const deleteItem = (
   collection: string,
   id: string,
-  callback?: () => void
+  callback?: () => void,
 ) => actions().deleteItem(collection, id, callback);
 
 export const deleteMultipleDocs = (ids: string[], callback?: () => void) =>
@@ -449,7 +455,7 @@ export const runFakeData = (dataArray: NodeItem[]) =>
 export const deleteNode = (
   allNode: NodeItem[],
   node: NodeItem,
-  callback?: () => void
+  callback?: () => void,
 ) => actions().deleteNode(allNode, node, callback);
 
 export const getUser = () => actions().getUser();

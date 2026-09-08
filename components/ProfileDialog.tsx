@@ -409,11 +409,13 @@ export function ProfileDialog({
     }
     if (mode === "addChild") {
       const newId = uuidv4();
+      const needsNewSpouse = !node?.spouses?.length;
+      const newSpouseId = needsNewSpouse ? uuidv4() : "";
       const otherParent = data?.otherParentId
         ? { id: data?.otherParentId, type: "blood" }
         : (node?.spouses?.length || 0) > 0
           ? { id: node?.spouses?.[0].id, type: "blood" }
-          : {};
+          : { id: newSpouseId, type: "blood" };
 
       let avatarUrl = data?.photoURL;
       if (selectedAvatar) {
@@ -429,19 +431,37 @@ export function ProfileDialog({
         ...data,
         id: newId,
         photoURL: avatarUrl,
-        parents: otherParent?.id
-          ? [{ id: node?.id || "", type: "blood" }, otherParent]
-          : [{ id: node?.id || "", type: "blood" }],
+        parents: [{ id: node?.id || "", type: "blood" }, otherParent],
       };
       const parentData = {
         children: [
           ...(node?.children || []),
           { id: newId, type: data?.childType },
         ],
+        ...(needsNewSpouse
+          ? {
+              spouses: [
+                ...(node?.spouses || []),
+                { id: newSpouseId, type: "married" },
+              ],
+            }
+          : {}),
       };
       const otherParentData = {
         children: [{ id: newId, type: data?.childType }],
       };
+
+      const newSpouseData = needsNewSpouse
+        ? {
+            id: newSpouseId,
+            gender: node?.gender === "male" ? "female" : "male",
+            isAlive: true,
+            children: [{ id: newId, type: data?.childType }],
+            siblings: [],
+            spouses: [{ id: node?.id || "", type: "married" }],
+            parents: [],
+          }
+        : null;
 
       addData(tempData as NodeItem, (type) => {
         if (type === "error")
@@ -454,6 +474,9 @@ export function ProfileDialog({
           });
         onClose?.("success");
       });
+      if (newSpouseData) {
+        addData(newSpouseData as any);
+      }
       // update parent
       editData("data", node?.id || "", parentData);
       editData("data", otherParent?.id || "", otherParentData);
