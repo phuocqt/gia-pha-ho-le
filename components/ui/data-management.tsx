@@ -1,8 +1,9 @@
 "use client";
 
 import { ChangeEvent, useRef, useState } from "react";
-import { Download, Upload } from "lucide-react";
+import { Download, RotateCcw, Upload } from "lucide-react";
 import { getAllData, runFakeData } from "@/actions";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { NodeItem } from "@/type";
+import { SOURCES, sourceKey } from "@/constants/const";
 
 const downloadJson = (data: unknown, fileName: string) => {
   const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -33,6 +35,9 @@ export function DataManagement() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [isResetConfirmationOpen, setIsResetConfirmationOpen] =
+    useState(false);
   const { toast } = useToast();
 
   const exportData = async (prefix = "data") => {
@@ -96,6 +101,28 @@ export function DataManagement() {
     }
   };
 
+  const handleReset = async () => {
+    try {
+      setIsResetting(true);
+      await exportData("backup-before-reset-data");
+      await runFakeData(SOURCES[sourceKey] as unknown as NodeItem[]);
+      toast({
+        title: "Reset thành công",
+        description: "Đã export backup và khôi phục dữ liệu mặc định.",
+      });
+    } catch (error) {
+      console.error("Reset data error:", error);
+      toast({
+        title: "Reset thất bại",
+        description: "Không thể khôi phục dữ liệu mặc định.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResetting(false);
+      setIsResetConfirmationOpen(false);
+    }
+  };
+
   return (
     <div className="mx-auto w-full max-w-3xl p-6">
       <Card>
@@ -109,7 +136,7 @@ export function DataManagement() {
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button
               className="gap-2"
-              disabled={isExporting || isImporting}
+              disabled={isExporting || isImporting || isResetting}
               onClick={handleExport}
             >
               <Download className="h-4 w-4" />
@@ -117,19 +144,28 @@ export function DataManagement() {
             </Button>
             <Button
               className="gap-2"
-              disabled={isExporting || isImporting}
+              disabled={isExporting || isImporting || isResetting}
               onClick={() => inputRef.current?.click()}
               variant="outline"
             >
               <Upload className="h-4 w-4" />
               {isImporting ? "Đang import..." : "Import data"}
             </Button>
+            <Button
+              className="gap-2"
+              disabled={isExporting || isImporting || isResetting}
+              onClick={() => setIsResetConfirmationOpen(true)}
+              variant="destructive"
+            >
+              <RotateCcw className="h-4 w-4" />
+              {isResetting ? "Đang reset..." : "Reset data mặc định"}
+            </Button>
           </div>
           <Input
             ref={inputRef}
             accept="application/json,.json"
             className="hidden"
-            disabled={isExporting || isImporting}
+            disabled={isExporting || isImporting || isResetting}
             onChange={handleImport}
             type="file"
           />
@@ -140,6 +176,13 @@ export function DataManagement() {
           </p>
         </CardContent>
       </Card>
+      <Alert
+        desc="Dữ liệu hiện tại sẽ được export backup, sau đó collection data và historyData sẽ bị thay bằng dữ liệu mặc định."
+        messenger="Bạn có chắc muốn reset dữ liệu?"
+        onClose={() => setIsResetConfirmationOpen(false)}
+        onContinue={handleReset}
+        open={isResetConfirmationOpen}
+      />
     </div>
   );
 }

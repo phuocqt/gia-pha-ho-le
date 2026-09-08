@@ -25,5 +25,6 @@ export const SOURCES = {
 } as Readonly<{ [key: string]: readonly Readonly<Node>[] }>;
 
 export const DEFAULT_SOURCE = Object.keys(SOURCES)[0];
+export const sourceKey = "test-tree-n1.json";
 
 export const URL_LABEL = "URL (Gist, Paste.bin, ...)";

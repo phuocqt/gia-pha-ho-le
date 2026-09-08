@@ -10,10 +10,8 @@ import ReactFamilyTree from "react-family-tree";
 import css from "../App.module.css";
 import { PinchZoomPan, PinchZoomPanRef } from "../PinchZoomPan/PinchZoomPan";
 import { FamilyNode } from "../components/FamilyNode/FamilyNode";
-import { NODE_HEIGHT, NODE_WIDTH, SOURCES } from "../constants/const";
+import { NODE_HEIGHT, NODE_WIDTH, SOURCES, sourceKey } from "../constants/const";
 import { useRouter } from "next/navigation";
-
-const sourceKey = "test-tree-n1.json";
 
 const normalizeName = (value?: string) =>
   (value || "")
@@ -31,7 +29,7 @@ export default function App() {
   const treeRef = useRef<PinchZoomPanRef>(null);
 
   const [nodes, setNodes] = useState<NodeItem[]>(
-    SOURCES[sourceKey] as unknown as NodeItem[]
+    SOURCES[sourceKey] as unknown as NodeItem[],
   );
   const [initialLoading, setInitialLoading] = useState<boolean>(true);
 
@@ -46,7 +44,7 @@ export default function App() {
 
   const selected = useMemo(
     () => nodes?.find((item) => item.id === selectId),
-    [nodes, selectId]
+    [nodes, selectId],
   );
 
   const matchedNodes = useMemo(() => {
@@ -153,7 +151,9 @@ export default function App() {
                     </button>
                   ))
                 ) : (
-                  <div className="p-3 text-[13px] text-[#687083]">Không tìm thấy tên phù hợp</div>
+                  <div className="p-3 text-[13px] text-[#687083]">
+                    Không tìm thấy tên phù hợp
+                  </div>
                 )}
               </div>
             )}
@@ -205,4 +205,3 @@ export default function App() {
     </div>
   );
 }
-
